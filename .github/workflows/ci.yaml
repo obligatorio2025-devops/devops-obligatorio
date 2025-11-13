@@ -45,7 +45,7 @@ jobs:
 
     # --- Run Go tests (api-gateway + inventory)
     - name: Run Go tests
-      working-directory: ./app
+      working-directory: ./tests/go
       run: |
         echo "Running Go tests..."
         cd api-gateway && go test ./... -coverprofile=coverage.out
@@ -53,7 +53,7 @@ jobs:
 
     # --- Run Python tests (product-service)
     - name: Run Python tests
-      working-directory: ./app/product-service
+      working-directory: ./tests/python/product-service
       run: |
         echo "Running Python tests..."
         pip install -r requirements.txt pytest pytest-cov
