@@ -1,7 +1,9 @@
 # devops-obligatorio
 Repositorio para el obligatorio de DevOps para finales de 2025.  
 
-El equipo esta formado por: Camila Ayunto, Bruno Charletto y Constanza Esquivel
+El objetivo del proyecto es implementar una arquitectura DevOps completa para la aplicación StockWiz, garantizando despliegues confiables, automatización, observabilidad y control de calidad.
+
+El equipo esta formado por: Camila Ayuto, Bruno Charletto y Constanza Esquivel
 
 ## Estrategia de ramas
 
