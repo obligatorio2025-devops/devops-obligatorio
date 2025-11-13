@@ -1,6 +1,7 @@
 name: CI/CD Pipeline - StockWiz
 
 on:
+  workflow_dispatch: 
   pull_request:
     branches: [ "develop", "test", "main" ]
 
@@ -103,8 +104,7 @@ jobs:
       name: testing
       url: https://test.stockwiz.fake  # opcional - url falso
 
-      protection_rules:
-        reviewers: ['dev-team']
+
 
     steps:
       - name: Checkout repo
