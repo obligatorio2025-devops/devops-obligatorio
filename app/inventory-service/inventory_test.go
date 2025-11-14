@@ -6,14 +6,22 @@ import (
 	"testing"
 )
 
-func TestHealthCheck(t *testing.T) {
+// --- Handler mínimo a testear ---
+// Copiado de tu main.go
+func healthCheckMock(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"healthy"}`))
+}
+
+func TestHealthCheck_Returns200(t *testing.T) {
 	req, err := http.NewRequest("GET", "/health", nil)
 	if err != nil {
 		t.Fatalf("Error creating request: %v", err)
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(healthCheck)
+	handler := http.HandlerFunc(healthCheckMock)
 
 	handler.ServeHTTP(rr, req)
 

@@ -1,4 +1,4 @@
-package apigateway_test
+package main  // <-- cambiar de apigateway_test a main
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 )
 
 // --- Handler mínimo a testear ---
-// Importante: copiamos solo la función healthCheck de tu código.
+// Copiamos solo la función healthCheck de tu código main.go.
 
 func healthCheckMock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
