@@ -46,11 +46,16 @@ jobs:
 
     # --- Run Go tests (api-gateway + inventory)
     - name: Run Go tests
-      working-directory: ./tests/go
+      working-directory: ./app/api-gateway
       run: |
-        echo "Running Go tests..."
-        cd api-gateway && go test ./... -coverprofile=coverage.out
-        cd ../inventory-service && go test ./... -coverprofile=coverage.out
+        echo "Running API Gateway tests..."
+        go test ./... -coverprofile=coverage.out
+
+    - name: Run Inventory Service tests
+      working-directory: ./app/inventory-service
+      run: |
+        echo "Running Inventory Service tests..."
+        go test ./... -coverprofile=coverage.out
 
     # --- Run Python tests (product-service)
     - name: Run Python tests
