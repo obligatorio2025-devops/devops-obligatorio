@@ -1,21 +1,17 @@
-import sys
-from pathlib import Path
-import importlib.util
-from fastapi.testclient import TestClient
+import asyncio
+from main import health_check
+from fastapi import Request
+from starlette.responses import JSONResponse
 
-# Ruta al archivo main.py dentro de app/product-service
-ROOT = Path(__file__).resolve().parents[3]
-MAIN_FILE = ROOT / "app" / "product-service" / "main.py"
+# Creamos un mock mínimo de Request
+class DummyRequest:
+    pass
 
-# Cargar dinámicamente main.py como módulo
-spec = importlib.util.spec_from_file_location("product_service", MAIN_FILE)
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
-
-app = module.app
-client = TestClient(app)
-
-def test_health_check():
-    res = client.get("/health")
-    assert res.status_code == 200
-    assert res.json()["status"] == "healthy"
+def test_health_check_returns_healthy():
+    # Llamamos a la función directamente
+    loop = asyncio.get_event_loop()
+    response = loop.run_until_complete(health_check(DummyRequest()))
+    
+    assert isinstance(response, JSONResponse)
+    assert response.status_code == 200
+    assert response.body.decode() == '{"status":"healthy"}'
