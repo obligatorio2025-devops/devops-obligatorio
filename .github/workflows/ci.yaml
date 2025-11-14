@@ -127,8 +127,6 @@ jobs:
       name: production
       url: https://stockwiz.fake  # opcional - url falso
 
-      protection_rules:
-        reviewers: ['team-leads', 'qa-managers']
 
     steps:
       - name: Checkout repo
