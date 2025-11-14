@@ -59,11 +59,12 @@ jobs:
 
     # --- Run Python tests (product-service)
     - name: Run Python tests
-      working-directory: ./tests/python/product-service
+      working-directory: ./app/product-service
       run: |
         echo "Running Python tests..."
         pip install -r requirements.txt pytest pytest-cov
-        pytest --cov=. --cov-report=xml:coverage.xml
+        pytest ../../tests/python/product-service --cov=. --cov-report=xml:coverage.xml
+
 
   sonarqube:
     name: SonarQube
