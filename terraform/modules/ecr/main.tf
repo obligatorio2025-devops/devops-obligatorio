@@ -1,7 +1,8 @@
-
 resource "aws_ecr_repository" "repos" {
   for_each = toset(var.service_names)
-  name     = each.key
+  
+  # Nombre del repositorio con entorno + servicio
+  name = "${var.environment}-${each.value}"
 
   image_scanning_configuration {
     scan_on_push = true
@@ -9,6 +10,8 @@ resource "aws_ecr_repository" "repos" {
 
   tags = {
     project = "stockwiz"
+    environment = var.environment
+    service     = each.value
   }
 }
 

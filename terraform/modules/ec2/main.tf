@@ -47,8 +47,27 @@ resource "aws_instance" "app" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
   subnet_id     = var.subnet_id
+  associate_public_ip_address = true
 
   vpc_security_group_ids = [aws_security_group.instance.id]
+
+  root_block_device {
+    volume_size = 20
+    volume_type = "gp3"
+  }
+
+  //to do: user_data temporal
+  user_data = <<-EOF
+    #!/bin/bash
+    sudo apt update -y
+    sudo apt install -y nginx
+    # Página principal
+    echo "Hello from Develop" | sudo tee /var/www/html/index.html
+    # Endpoint health check
+    echo "OK" | sudo tee /var/www/html/health
+    sudo systemctl enable nginx
+    sudo systemctl start nginx
+  EOF
 
   tags = {
     Name        = "${var.environment}-instance-${count.index + 1}"
