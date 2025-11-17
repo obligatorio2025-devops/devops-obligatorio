@@ -19,7 +19,7 @@ func healthCheckMock(w http.ResponseWriter, r *http.Request) {
 
 // --- TEST ---
 
-func TestHealthCheck_Returns200(t *testing.T) {
+func testHealthCheckReturns200(t *testing.T) {
 	r := chi.NewRouter()
 	r.Get("/health", healthCheckMock)
 

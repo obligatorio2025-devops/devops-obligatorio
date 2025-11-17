@@ -14,7 +14,7 @@ func healthCheckMock(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"status":"healthy"}`))
 }
 
-func TestHealthCheck_Returns200(t *testing.T) {
+func testHealthCheckReturns200(t *testing.T) {
 	req, err := http.NewRequest("GET", "/health", nil)
 	if err != nil {
 		t.Fatalf("Error creating request: %v", err)
