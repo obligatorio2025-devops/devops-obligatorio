@@ -28,7 +28,7 @@ RUN apk --no-cache add ca-certificates
 
 # Copiar binario compilado
 COPY --from=builder /app/inventory-service .
-
+#asd
 # Usuario no root para seguridad
 RUN addgroup -g 1000 appuser && \
     adduser -D -u 1000 -G appuser appuser && \
