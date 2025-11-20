@@ -14,36 +14,31 @@ variable "public_subnet_cidrs" {
   type = list(string)
 }
 
-variable "azs" {
+variable "private_subnet_cidrs" {
   type = list(string)
 }
 
-variable "instance_type" {
-  type    = string
-  default = "t2.micro"
-}
-
-variable "instance_count" {
-  type    = number
-  default = 1
+variable "azs" {
+  type = list(string)
 }
 
 variable "enable_alb" {
   type = bool
 }
 
-variable "enable_asg" {
-  type = bool
-}
-
-variable "min_instances" {
+variable "desired_count" {
   type = number
 }
 
-variable "max_instances" {
+variable "min_count" {
   type = number
 }
 
-variable "desired_instances" {
+variable "max_count" {
   type = number
+}
+
+variable "enable_autoscaling" {
+  type    = bool
+  default = true
 }

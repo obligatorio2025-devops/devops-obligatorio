@@ -20,3 +20,8 @@ output "igw_id" {
 output "public_route_table_id" {
   value = aws_route_table.public.id
 }
+
+output "private_subnet_ids" {
+  description = "Private subnets IDs"
+  value = [for s in aws_subnet.private : s.id]
+}

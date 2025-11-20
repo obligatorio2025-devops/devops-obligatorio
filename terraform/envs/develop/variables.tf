@@ -20,6 +20,11 @@ variable "public_subnet_cidrs" {
   type        = list(string)
 }
 
+variable "private_subnet_cidrs" {
+  description = "CIDR block for private subnet - develop"
+  type        = list(string)
+}
+
 variable "instance_type" {
   type        = string
   default     = "t2.micro"

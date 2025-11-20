@@ -18,21 +18,11 @@ provider "aws" {
 
 module "vpc" {
   source = "../../modules/vpc"
-
-  vpc_cidr            = var.vpc_cidr
-  public_subnet_cidrs = var.public_subnet_cidrs
-  environment         = var.environment
-  azs                 = var.azs
-}
-
-module "ec2_instances" {
-  source = "../../modules/ec2"
-
-  instance_count = var.instance_count
-  instance_type  = var.instance_type
-  subnet_id      = module.vpc.public_subnet_ids[0]
-  vpc_id         = module.vpc.vpc_id
-  environment    = var.environment
+  vpc_cidr             = var.vpc_cidr
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  environment          = var.environment
+  azs                  = var.azs
 }
 
 module "ecr" {
@@ -40,3 +30,15 @@ module "ecr" {
   service_names = ["api-gateway", "inventory-service", "product-service"]
   environment   = var.environment
 }
+
+# Para cuando esté el modulo ecs
+# module "ecs" {
+#   source = "../../modules/ecs"
+
+#   cluster_name   = "${var.environment}-cluster"
+#   vpc_id         = module.vpc.vpc_id
+#   public_subnets = module.vpc.public_subnet_ids
+#   private_subnets = [module.vpc.private_subnet_ids[0]] # develop usa una sola
+#   environment    = var.environment
+# }
+
