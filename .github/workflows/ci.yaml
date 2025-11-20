@@ -1,44 +1,14 @@
-name: CI/CD Pipeline - StockWiz
+name: CI Pipeline - StockWiz
 
 on:
   workflow_dispatch: 
   pull_request:
-    branches: [ "develop", "test", "main" ]
+    branches: [ "develop", "testing", "main" ]
 
 jobs:
-  build:
-    name: Build microservices
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
-
-    # --- Build api-gateway (Go)
-    - name: Build API Gateway
-      working-directory: ./app/api-gateway
-      run: |
-        echo "Building API Gateway..."
-        docker build -t stockwiz-api-gateway:latest .
-
-    # --- Build inventory-service (Go)
-    - name: Build Inventory Service
-      working-directory: ./app/inventory-service
-      run: |
-        echo "Building Inventory Service..."
-        docker build -t stockwiz-inventory-service:latest .
-
-    # --- Build product-service (Python)
-    - name: Build Product Service
-      working-directory: ./app/product-service
-      run: |
-        echo "Building Product Service..."
-        docker build -t stockwiz-product-service:latest .
-
   test:
     name: Test
     runs-on: ubuntu-latest
-    needs: build
 
     steps:
     - name: Checkout repo
@@ -69,7 +39,7 @@ jobs:
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
-    needs: test
+
     steps:
       - uses: actions/checkout@v4
         with:
