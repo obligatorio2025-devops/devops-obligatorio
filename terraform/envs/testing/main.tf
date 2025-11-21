@@ -100,3 +100,10 @@ module "ecr" {
   service_names = ["api-gateway", "inventory-service", "product-service"]
   environment   = var.environment
 }
+
+# to do: ajustar  
+module "ecs" {
+  source               = "../../modules/ecs"
+  vpc_id               = module.vpc.vpc_id
+  subnet_ids           = module.vpc.public_subnet_ids
+}
