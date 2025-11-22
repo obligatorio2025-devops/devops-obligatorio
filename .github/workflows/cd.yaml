@@ -107,9 +107,9 @@ jobs:
     - name: Guardar TF outputs
       id: ecr_urls
       run: |
-        echo "api=${jq -r '.api_gateway_ecr_url.value' < ${{ steps.env.outputs.dir }}/tf_outputs.json}" >> $GITHUB_OUTPUT
-        echo "inventory=${jq -r '.inventory_service_ecr_url.value' < ${{ steps.env.outputs.dir }}/tf_outputs.json}" >> $GITHUB_OUTPUT
-        echo "product=${jq -r '.product_service_ecr_url.value' < ${{ steps.env.outputs.dir }}/tf_outputs.json}" >> $GITHUB_OUTPUT
+        echo "api=$(jq -r '.api_gateway_ecr_url.value' < ${{ steps.env.outputs.dir }}/tf_outputs.json)" >> $GITHUB_OUTPUT
+        echo "inventory=$(jq -r '.inventory_service_ecr_url.value' < ${{ steps.env.outputs.dir }}/tf_outputs.json)" >> $GITHUB_OUTPUT
+        echo "product=$(jq -r '.product_service_ecr_url.value' < ${{ steps.env.outputs.dir }}/tf_outputs.json)" >> $GITHUB_OUTPUT
 
     # Login a ECR
     - name: Login en Amazon ECR
