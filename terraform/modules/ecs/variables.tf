@@ -55,3 +55,8 @@ variable "max_capacity" {
   description = "Capacidad máxima de instancias/tareas"
   type        = number
 }
+
+variable "security_group_ids" {
+  description = "Lista de IDs de Security Groups para el servicio ECS/Fargate"
+  type        = list(string)
+}
