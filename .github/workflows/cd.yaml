@@ -61,17 +61,31 @@ jobs:
       - name: Determinar ambiente según rama
         id: env
         run: |
-          BRANCH="${GITHUB_REF##*/}"
-          if [[ "$BRANCH" == "develop" ]]; then
-            echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" == "testing" ]]; then
-            echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
-          elif [[ "$BRANCH" == "main" ]]; then
-            echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+          if [[ -n "$GITHUB_BASE_REF" ]]; then
+            # Esto es un PR
+            BRANCH="$GITHUB_BASE_REF"
           else
-            echo "Error: Rama '$BRANCH' no tiene ambiente configurado. Abortando workflow."
-            exit 1
+            # Esto es un push directo
+            BRANCH="${GITHUB_REF##*/}"
           fi
+
+          echo "Rama destino: $BRANCH"
+
+          case "$BRANCH" in
+            develop)
+              echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
+              ;;
+            testing)
+              echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
+              ;;
+            main)
+              echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Rama '$BRANCH' no tiene ambiente configurado. Abortando workflow."
+              exit 1
+              ;;
+          esac
 
       # Terraform Init / Plan / Apply
       - name: Terraform Init
