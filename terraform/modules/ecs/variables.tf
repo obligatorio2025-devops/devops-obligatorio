@@ -7,13 +7,11 @@ variable "region" {
 variable "cluster_name" {
   description = "Nombre para el Cluster ECS."
   type        = string
-  default     = "fargate-cluster-dev"
 }
 
 variable "service_name" {
   description = "Nombre para el Servicio ECS."
   type        = string
-  default     = "mi-aplicacion-web-service"
 }
 
 variable "vpc_id" {
@@ -36,4 +34,24 @@ variable "container_port" {
   description = "Puerto del contenedor que expone la aplicación."
   type        = number
   default     = 80
+}
+
+variable "environment" {
+  description = "Nombre del entorno (develop, testing, prod)"
+  type        = string
+}
+
+variable "desired_count" {
+  description = "Número de tareas por defecto"
+  type        = number
+}
+
+variable "min_capacity" {
+  description = "Capacidad mínima de instancias/tareas"
+  type        = number
+}
+
+variable "max_capacity" {
+  description = "Capacidad máxima de instancias/tareas"
+  type        = number
 }
