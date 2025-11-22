@@ -67,6 +67,7 @@ jobs:
             echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
           else
             echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+          fi
 
       # Terraform Init / Plan / Apply
       - name: Terraform Init
