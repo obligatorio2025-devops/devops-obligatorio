@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: Build Microservices
+    name: Build & Deploy Microservice
     runs-on: ubuntu-latest
     outputs:
       cluster_name: ${{ steps.tfout.outputs.cluster_name }}
@@ -135,30 +135,13 @@ jobs:
 
           echo "Imágenes subidas exitosamente"
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        
-       # Configurar credenciales AWS
-      - name: Configuración de credenciales AWS
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
-
       # Actualizar servicios ECS usando outputs de build
       - name: Update ECS Services
         env:
-          CLUSTER_NAME: ${{ needs.build.outputs.cluster_name }}
-          API_SERVICE: ${{ needs.build.outputs.api_gateway_service }}
-          INVENTORY_SERVICE: ${{ needs.build.outputs.inventory_service }}
-          PRODUCT_SERVICE: ${{ needs.build.outputs.product_service }}
+          CLUSTER_NAME: ${{ steps.tfout.outputs.cluster_name }}
+          API_SERVICE: ${{ steps.tfout.outputs.api_gateway_service }}
+          INVENTORY_SERVICE: ${{ steps.tfout.outputs.inventory_service }}
+          PRODUCT_SERVICE: ${{ steps.tfout.outputs.product_service }}
           AWS_REGION: ${{ env.AWS_REGION }}
         run: |
           echo "Actualizando servicios ECS..."
