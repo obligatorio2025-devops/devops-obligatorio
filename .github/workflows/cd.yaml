@@ -1,7 +1,7 @@
 name: Deploy to AWS ECS
 
 on:
-  push:
+  pull_request:
     branches:
       - develop
       - testing
@@ -13,7 +13,7 @@ env:
 
 jobs:
   build:
-    name: Build Microservices
+    name: Build & Deploy Microservice
     runs-on: ubuntu-latest
     outputs:
       cluster_name: ${{ steps.tfout.outputs.cluster_name }}
@@ -21,7 +21,7 @@ jobs:
       inventory_service: ${{ steps.tfout.outputs.inventory_service }}
       product_service: ${{ steps.tfout.outputs.product_service }}
 
-    steps:
+    steps: 
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -61,13 +61,31 @@ jobs:
       - name: Determinar ambiente según rama
         id: env
         run: |
-          if [[ "${GITHUB_REF##*/}" == "develop" ]]; then
-            echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
-          elif [[ "${GITHUB_REF##*/}" == "testing" ]]; then
-            echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
+          if [[ -n "$GITHUB_BASE_REF" ]]; then
+            # Esto es un PR
+            BRANCH="$GITHUB_BASE_REF"
           else
-            echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+            # Esto es un push directo
+            BRANCH="${GITHUB_REF##*/}"
           fi
+
+          echo "Rama destino: $BRANCH"
+
+          case "$BRANCH" in
+            develop)
+              echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
+              ;;
+            testing)
+              echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
+              ;;
+            main)
+              echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Rama '$BRANCH' no tiene ambiente configurado. Abortando workflow."
+              exit 1
+              ;;
+          esac
 
       # Terraform Init / Plan / Apply
       - name: Terraform Init
@@ -135,44 +153,37 @@ jobs:
 
           echo "Imágenes subidas exitosamente"
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
+      # DESCOMENTAR CUANDO QUEDE LO DE ECS
+      # # Actualizar servicios ECS usando outputs de build
+      # - name: Update ECS Services
+      #   env:
+      #     CLUSTER_NAME: ${{ steps.tfout.outputs.cluster_name }}
+      #     API_SERVICE: ${{ steps.tfout.outputs.api_gateway_service }}
+      #     INVENTORY_SERVICE: ${{ steps.tfout.outputs.inventory_service }}
+      #     PRODUCT_SERVICE: ${{ steps.tfout.outputs.product_service }}
+      #     AWS_REGION: ${{ env.AWS_REGION }}
+      #   run: |
+      #     echo "Actualizando servicios ECS..."
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      #     aws ecs update-service \
+      #       --cluster $CLUSTER_NAME \
+      #       --service $API_SERVICE \
+      #       --force-new-deployment \
+      #       --region $AWS_REGION
 
-      # Actualizar servicios ECS usando outputs de build
-      - name: Update ECS Services
-        env:
-          CLUSTER_NAME: ${{ needs.build.outputs.cluster_name }}
-          API_SERVICE: ${{ needs.build.outputs.api_gateway_service }}
-          INVENTORY_SERVICE: ${{ needs.build.outputs.inventory_service }}
-          PRODUCT_SERVICE: ${{ needs.build.outputs.product_service }}
-          AWS_REGION: ${{ env.AWS_REGION }}
-        run: |
-          echo "Actualizando servicios ECS..."
+      #     aws ecs update-service \
+      #       --cluster $CLUSTER_NAME \
+      #       --service $INVENTORY_SERVICE \
+      #       --force-new-deployment \
+      #       --region $AWS_REGION
 
-          aws ecs update-service \
-            --cluster $CLUSTER_NAME \
-            --service $API_SERVICE \
-            --force-new-deployment \
-            --region $AWS_REGION
+      #     aws ecs update-service \
+      #       --cluster $CLUSTER_NAME \
+      #       --service $PRODUCT_SERVICE \
+      #       --force-new-deployment \
+      #       --region $AWS_REGION
 
-          aws ecs update-service \
-            --cluster $CLUSTER_NAME \
-            --service $INVENTORY_SERVICE \
-            --force-new-deployment \
-            --region $AWS_REGION
-
-          aws ecs update-service \
-            --cluster $CLUSTER_NAME \
-            --service $PRODUCT_SERVICE \
-            --force-new-deployment \
-            --region $AWS_REGION
-
-          echo "Deployment en los 3 microservicios finalizado"
+      #     echo "Deployment en los 3 microservicios finalizado"
 
       # Mostrar URL del ALB si existe
       - name: Mostrar URL del ALB (solo si existe)
