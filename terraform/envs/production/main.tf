@@ -107,3 +107,16 @@ module "ecr" {
 #   vpc_id               = module.vpc.vpc_id
 #   subnet_ids           = module.vpc.public_subnet_ids
 # }
+
+module "backups" {
+  source      = "../../modules/backups"
+  bucket_name = var.bucket_name
+  environment = var.environment
+}
+
+module "lambda" {
+  source        = "../../modules/lambda"
+  lambda_name   = var.lambda_name
+  bucket_name   = module.backups.bucket_name 
+  environment   = var.environment
+}

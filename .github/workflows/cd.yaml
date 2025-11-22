@@ -1,0 +1,199 @@
+name: Deploy to AWS ECS
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - develop
+      - testing
+      - main
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build:
+    if: github.event.pull_request.merged == true
+    name: Build & Deploy Microservice
+    runs-on: ubuntu-latest
+    outputs:
+      cluster_name: ${{ steps.tfout.outputs.cluster_name }}
+      api_gateway_service: ${{ steps.tfout.outputs.api_gateway_service }}
+      inventory_service: ${{ steps.tfout.outputs.inventory_service }}
+      product_service: ${{ steps.tfout.outputs.product_service }}
+
+    steps: 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Build microservices
+      - name: Build API Gateway
+        working-directory: ./app/api-gateway
+        run: |
+          echo "Building API Gateway..."
+          docker build -t stockwiz-api-gateway:latest .
+
+      - name: Build Inventory Service
+        working-directory: ./app/inventory-service
+        run: |
+          echo "Building Inventory Service..."
+          docker build -t stockwiz-inventory-service:latest .
+
+      - name: Build Product Service
+        working-directory: ./app/product-service
+        run: |
+          echo "Building Product Service..."
+          docker build -t stockwiz-product-service:latest .
+
+      # Configurar credenciales AWS
+      - name: Configuración de credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Determinar ambiente segun rama
+      - name: Determinar ambiente según rama
+        id: env
+        run: |
+          if [[ -n "$GITHUB_BASE_REF" ]]; then
+            # Esto es un PR
+            BRANCH="$GITHUB_BASE_REF"
+          else
+            # Esto es un push directo
+            BRANCH="${GITHUB_REF##*/}"
+          fi
+
+          echo "Rama destino: $BRANCH"
+
+          case "$BRANCH" in
+            develop)
+              echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
+              ;;
+            testing)
+              echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
+              ;;
+            main)
+              echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Rama '$BRANCH' no tiene ambiente configurado. Abortando workflow."
+              exit 1
+              ;;
+          esac
+
+      # Terraform Init / Plan / Apply
+      - name: Terraform Init
+        working-directory: ${{ steps.env.outputs.dir }}
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: ${{ steps.env.outputs.dir }}
+        run: terraform plan
+
+      - name: Terraform Apply
+        working-directory: ${{ steps.env.outputs.dir }}
+        run: terraform apply -auto-approve
+
+      # Obtener outputs de Terraform
+      - name: Obtener Terraform outputs
+        id: tfout
+        working-directory: ${{ steps.env.outputs.dir }}
+        run: |
+          terraform output -json > tf_outputs.json
+          echo "cluster_name=$(jq -r '.cluster_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "api_gateway_service=$(jq -r '.api_gateway_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "inventory_service=$(jq -r '.inventory_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "product_service=$(jq -r '.product_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "api=$(jq -r '.api_gateway_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "inventory=$(jq -r '.inventory_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "product=$(jq -r '.product_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+
+      # Backup main.py solo en producción
+      - name: Backup main.py antes del deploy (solo producción)
+        if: github.ref == 'refs/heads/main'
+        env:
+          BUCKET: backups-prod
+        run: |
+          echo "Haciendo backup de main.py en S3..."
+          aws s3 cp ./app/product-service/main.py s3://$BUCKET/main-$(date +%Y%m%d-%H%M%S).py
+
+      # Login y push a ECR
+      - name: Login en Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push microservicios a ECR
+        env:
+          API_ECR: ${{ steps.tfout.outputs.api }}
+          INVENTORY_ECR: ${{ steps.tfout.outputs.inventory }}
+          PRODUCT_ECR: ${{ steps.tfout.outputs.product }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "Subiendo imágenes a ECR..."
+
+          docker tag stockwiz-api-gateway:latest $API_ECR:$IMAGE_TAG
+          docker tag stockwiz-api-gateway:latest $API_ECR:latest
+          docker push $API_ECR:$IMAGE_TAG
+          docker push $API_ECR:latest
+
+          docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:$IMAGE_TAG
+          docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:latest
+          docker push $INVENTORY_ECR:$IMAGE_TAG
+          docker push $INVENTORY_ECR:latest
+
+          docker tag stockwiz-product-service:latest $PRODUCT_ECR:$IMAGE_TAG
+          docker tag stockwiz-product-service:latest $PRODUCT_ECR:latest
+          docker push $PRODUCT_ECR:$IMAGE_TAG
+          docker push $PRODUCT_ECR:latest
+
+          echo "Imágenes subidas exitosamente"
+
+      # DESCOMENTAR CUANDO QUEDE LO DE ECS
+      # # Actualizar servicios ECS usando outputs de build
+      # - name: Update ECS Services
+      #   env:
+      #     CLUSTER_NAME: ${{ steps.tfout.outputs.cluster_name }}
+      #     API_SERVICE: ${{ steps.tfout.outputs.api_gateway_service }}
+      #     INVENTORY_SERVICE: ${{ steps.tfout.outputs.inventory_service }}
+      #     PRODUCT_SERVICE: ${{ steps.tfout.outputs.product_service }}
+      #     AWS_REGION: ${{ env.AWS_REGION }}
+      #   run: |
+      #     echo "Actualizando servicios ECS..."
+
+      #     aws ecs update-service \
+      #       --cluster $CLUSTER_NAME \
+      #       --service $API_SERVICE \
+      #       --force-new-deployment \
+      #       --region $AWS_REGION
+
+      #     aws ecs update-service \
+      #       --cluster $CLUSTER_NAME \
+      #       --service $INVENTORY_SERVICE \
+      #       --force-new-deployment \
+      #       --region $AWS_REGION
+
+      #     aws ecs update-service \
+      #       --cluster $CLUSTER_NAME \
+      #       --service $PRODUCT_SERVICE \
+      #       --force-new-deployment \
+      #       --region $AWS_REGION
+
+      #     echo "Deployment en los 3 microservicios finalizado"
+
+      # Mostrar URL del ALB si existe
+      - name: Mostrar URL del ALB (solo si existe)
+        working-directory: ${{ steps.env.outputs.dir }}
+        run: |
+          if terraform output -json | jq -e '.alb_dns_name' > /dev/null; then
+            echo "ALB URL: http://$(terraform output -raw alb_dns_name)"
+          else
+            echo "No hay ALB en este ambiente"
+          fi
