@@ -47,3 +47,42 @@ variable "aws_secret_key" {
   default = "FAKE_AWS_SECRET"
 }
 
+variable "security_group_ids" {
+  description = "Lista de IDs de Security Groups para el ALB/ECS"
+  type        = list(string)
+}
+
+variable "cluster_name" {
+  description = "Nombre del cluster ECS"
+  type        = string
+}
+
+variable "service_name" {
+  description = "Nombre del servicio ECS"
+  type        = string
+}
+
+variable "desired_count" {
+  description = "Número de tareas por defecto"
+  type        = number
+}
+
+variable "min_capacity" {
+  description = "Capacidad mínima de tareas"
+  type        = number
+}
+
+variable "max_capacity" {
+  description = "Capacidad máxima de tareas"
+  type        = number
+}
+
+variable "container_image" {
+  description = "Imagen del contenedor"
+  type        = string
+}
+
+variable "container_port" {
+  description = "Puerto expuesto por el contenedor"
+  type        = number
+}

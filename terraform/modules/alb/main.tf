@@ -40,3 +40,12 @@ resource "aws_lb_listener" "http" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+module "observability" {
+  source          = "../modules/observability"
+  region          = var.region
+  env             = var.env
+  ecs_cluster_name = module.ecs.cluster_name
+  alb_arn_suffix   = module.alb.alb_arn_suffix
+}
+
