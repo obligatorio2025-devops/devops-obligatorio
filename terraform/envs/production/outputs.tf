@@ -19,3 +19,11 @@ output "inventory_service_ecr_url" {
 output "product_service_ecr_url" {
   value = module.ecr.repositories["product-service"].repository_url
 }
+
+output "backups_bucket_name" {
+  value = module.backups.bucket_name
+}
+
+output "backups_bucket_arn" {
+  value = module.backups.bucket_arn
+}
