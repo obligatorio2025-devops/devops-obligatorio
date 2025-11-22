@@ -9,17 +9,13 @@ output "public_subnet_ids" {
 }
 
 output "api_gateway_ecr_url" {
-  value = aws_ecr_repository.api_gateway.repository_url
+  value = module.ecr.repositories["api-gateway"].repository_url
 }
 
 output "inventory_service_ecr_url" {
-  value = aws_ecr_repository.inventory.repository_url
+  value = module.ecr.repositories["inventory-service"].repository_url
 }
 
 output "product_service_ecr_url" {
-  value = aws_ecr_repository.product.repository_url
-}
-
-output "alb_dns_name" {
-  value = aws_lb.this.dns_name
+  value = module.ecr.repositories["product-service"].repository_url
 }

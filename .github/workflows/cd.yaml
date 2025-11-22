@@ -83,6 +83,17 @@ jobs:
       working-directory: ${{ steps.env.outputs.dir }}
       run: terraform apply -auto-approve
 
+    # Backup de main.py de product-service en produccion para respaldo de funcion lambda
+
+    - name: Backup main.py antes del deploy (solo producción)
+      if: github.ref == 'refs/heads/main'
+      env:
+        BUCKET: backups-prod
+      run: |
+        echo "Haciendo backup de main.py en S3..."
+        aws s3 cp ./app/product-service/main.py s3://$BUCKET/main-$(date +%Y%m%d-%H%M%S).py
+
+
     # Push a ECR
 
     # Se obtienen los ecr generados para el ambiente (1 por microservicio)

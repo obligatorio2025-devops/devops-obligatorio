@@ -30,8 +30,10 @@ module "ecr" {
 }
 
 # to do: ajustar
-module "ecs" {
-  source               = "../../modules/ecs"
-  vpc_id               = module.vpc.vpc_id
-  subnet_ids           = module.vpc.public_subnet_ids
-}
+# module "ecs" {
+#   source      = "../../modules/ecs"
+#   vpc_id      = module.vpc.vpc_id
+#   subnet_ids  = module.vpc.public_subnet_ids
+#   environment = var.environment
+# }
+

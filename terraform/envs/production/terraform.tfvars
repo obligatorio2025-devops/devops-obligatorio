@@ -1,0 +1,14 @@
+aws_region          = "us-east-1"
+environment         = "production"
+vpc_cidr            = "10.1.0.0/16"
+public_subnet_cidrs = ["10.1.0.0/25", "10.1.0.128/25"]
+azs = ["us-east-1a", "us-east-1b"]
+instance_type     = "t2.micro"
+instance_count    = 1
+enable_alb        = true
+enable_asg        = true
+min_instances     = 2
+max_instances     = 6
+desired_instances = 2
+bucket_name       = "backups-prod-456"
+lambda_name       = "product-backup-lambda"
