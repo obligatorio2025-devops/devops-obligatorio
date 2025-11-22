@@ -21,7 +21,7 @@ jobs:
       inventory_service: ${{ steps.tfout.outputs.inventory_service }}
       product_service: ${{ steps.tfout.outputs.product_service }}
 
-    steps:
+    steps: 
       - name: Checkout repo
         uses: actions/checkout@v4
 
