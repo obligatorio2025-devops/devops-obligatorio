@@ -60,3 +60,18 @@ variable "security_group_ids" {
   description = "Lista de IDs de Security Groups para el servicio ECS/Fargate"
   type        = list(string)
 }
+
+variable "task_cpu" {
+  description = "CPU asignada a la tarea Fargate (en unidades de CPU)"
+  type        = number
+}
+
+variable "task_memory" {
+  description = "Memoria asignada a la tarea Fargate (en MB)"
+  type        = number
+}
+
+variable "target_group_arn" {
+  type        = string
+  description = "ARN del target group del ALB"
+}

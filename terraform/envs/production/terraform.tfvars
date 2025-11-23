@@ -1,14 +1,19 @@
 aws_region          = "us-east-1"
 environment         = "production"
-vpc_cidr            = "10.1.0.0/16"
-public_subnet_cidrs = ["10.1.0.0/25", "10.1.0.128/25"]
+vpc_cidr            = "10.2.0.0/16"
+public_subnet_cidrs = ["10.2.0.0/24", "10.2.1.0/24"]
 azs = ["us-east-1a", "us-east-1b"]
-instance_type     = "t2.micro"
-instance_count    = 1
-enable_alb        = true
-enable_asg        = true
-min_instances     = 2
-max_instances     = 6
-desired_instances = 2
+
+cluster_name    = "stockwiz-production"
+service_name    = "stockwiz-production-service"
+desired_count   = 1
+min_capacity    = 1
+max_capacity    = 2
+container_image = "nginx:latest"
+container_port  = 80
+task_cpu         = 256   
+task_memory      = 512 
+
+
 bucket_name       = "backups-prod-456"
 lambda_name       = "product-backup-lambda"

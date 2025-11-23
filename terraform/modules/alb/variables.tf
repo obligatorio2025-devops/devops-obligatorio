@@ -13,3 +13,8 @@ variable "vpc_id" {
 variable "security_group_ids" {
   type = list(string)
 }
+
+variable "container_port" {
+  description = "Puerto del contenedor que expone la aplicación"
+  type        = number
+}

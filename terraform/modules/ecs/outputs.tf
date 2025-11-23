@@ -1,14 +1,19 @@
-output "ecs_cluster_arn" {
-  description = "ARN del ECS Cluster creado."
-  value       = module.ecs_fargate_app.cluster_arn 
+output "cluster_id" {
+  value = aws_ecs_cluster.this.id
 }
 
-output "ecs_service_name" {
-  description = "ID del servicio ECS Fargate creado."
-  value       = module.ecs_fargate_app.services[var.service_name].id 
+output "cluster_name" {
+  value = aws_ecs_cluster.this.name
+}
+
+output "service_arn" {
+  value = aws_ecs_service.app.arn
+}
+
+output "service_name" {
+  value = aws_ecs_service.app.name
 }
 
 output "task_definition_arn" {
-  description = "ARN de la Task Definition más reciente."
-  value       = module.ecs_fargate_app.services[var.service_name].task_definition_arn
+  value = aws_ecs_task_definition.app.arn
 }

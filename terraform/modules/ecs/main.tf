@@ -19,6 +19,31 @@ resource "aws_ecs_cluster" "this" {
   }
 }
 
+resource "aws_ecs_task_definition" "app" {
+  family                   = var.service_name
+  cpu                      = var.task_cpu      # ejemplo: 256
+  memory                   = var.task_memory   # ejemplo: 512
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+
+  container_definitions = jsonencode([
+    {
+      name      = var.service_name
+      image     = var.container_image
+      essential = true
+      portMappings = [
+        {
+          containerPort = var.container_port  
+          protocol      = "tcp"
+        }
+      ]
+    }
+  ])
+
+  execution_role_arn = data.aws_iam_role.lab_role.arn
+}
+
+
 resource "aws_ecs_service" "app" {
   name            = var.service_name
   cluster         = aws_ecs_cluster.this.id
@@ -28,14 +53,27 @@ resource "aws_ecs_service" "app" {
   network_configuration {
     subnets         = var.subnet_ids
     security_groups = var.security_group_ids
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = var.target_group_arn
+    container_name   = var.service_name
+    container_port   = var.container_port
   }
 
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
 
+  task_definition = aws_ecs_task_definition.app.arn
+
   tags = {
     Environment = var.environment
   }
+}
+
+data "aws_iam_role" "lab_role" {
+    name = "LabRole"
 }
 
 resource "aws_appautoscaling_target" "ecs" {
@@ -45,3 +83,22 @@ resource "aws_appautoscaling_target" "ecs" {
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
+
+resource "aws_appautoscaling_policy" "scale_cpu" {
+  name               = "${var.service_name}-scale-cpu"
+  service_namespace  = "ecs"
+  resource_id        = aws_appautoscaling_target.ecs.resource_id
+  scalable_dimension = "ecs:service:DesiredCount"
+  policy_type        = "TargetTrackingScaling"
+
+  target_tracking_scaling_policy_configuration {
+    target_value       = 70  # escala si uso de CPU promedio > 70%
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    scale_in_cooldown  = 60
+    scale_out_cooldown = 60
+  }
+}
+
+

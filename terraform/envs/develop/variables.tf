@@ -1,54 +1,25 @@
-// Variables del ambiente (Develop)
-
 variable "aws_region" {
-  type        = string
-  default     = "us-east-1"
+  type    = string
+  default = "us-east-1"
 }
 
 variable "environment" {
-  description = "Develop"
+  description = "Nombre del entorno (develop, testing, prod)"
   type        = string
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block for VPC - develop"
+  description = "CIDR block for VPC"
   type        = string
 }
 
 variable "public_subnet_cidrs" {
-  description = "CIDR block for public subnet - develop"
+  description = "CIDR blocks for public subnets"
   type        = list(string)
-}
-
-variable "instance_type" {
-  type        = string
-  default     = "t2.micro"
-}
-
-variable "instance_count" {
-  description = "Number of EC2 instances for develop"
-  type        = number
-  default     = 1
 }
 
 variable "azs" {
   description = "Availability Zones to use"
-  type        = list(string)
-}
-
-//to do: ver que se pone aca
-variable "aws_access_key" {
-  type    = string
-  default = "FAKE_AWS_KEY"
-}
-
-variable "aws_secret_key" {
-  type    = string
-  default = "FAKE_AWS_SECRET"
-}
-
-variable "security_group_ids" {
-  description = "Lista de IDs de Security Groups para el ALB/ECS"
   type        = list(string)
 }
 
@@ -84,5 +55,15 @@ variable "container_image" {
 
 variable "container_port" {
   description = "Puerto expuesto por el contenedor"
+  type        = number
+}
+
+variable "task_cpu" {
+  description = "CPU asignada a la tarea Fargate"
+  type        = number
+}
+
+variable "task_memory" {
+  description = "Memoria asignada a la tarea Fargate (MB)"
   type        = number
 }

@@ -1,51 +1,71 @@
 variable "aws_region" {
   type = string
+  default = "us-east-1"
 }
 
 variable "environment" {
+  description = "Nombre del entorno (develop, testing, prod)"
   type = string
 }
 
 variable "vpc_cidr" {
+  description = "CIDR block for VPC"
   type = string
 }
 
 variable "public_subnet_cidrs" {
+  description = "CIDR blocks for public subnets"
   type = list(string)
 }
 
 variable "azs" {
+  description = "Availability Zones to use"
   type = list(string)
 }
 
-variable "instance_type" {
-  type    = string
-  default = "t2.micro"
+variable "cluster_name" {
+  description = "Nombre del cluster ECS"
+  type        = string
 }
 
-variable "instance_count" {
-  type    = number
-  default = 1
+variable "service_name" {
+  description = "Nombre del servicio ECS"
+  type        = string
 }
 
-variable "enable_alb" {
-  type = bool
+variable "desired_count" {
+  description = "Número de tareas por defecto"
+  type        = number
 }
 
-variable "enable_asg" {
-  type = bool
+variable "min_capacity" {
+  description = "Capacidad mínima de tareas"
+  type        = number
 }
 
-variable "min_instances" {
-  type = number
+variable "max_capacity" {
+  description = "Capacidad máxima de tareas"
+  type        = number
 }
 
-variable "max_instances" {
-  type = number
+variable "container_image" {
+  description = "Imagen del contenedor"
+  type        = string
 }
 
-variable "desired_instances" {
-  type = number
+variable "container_port" {
+  description = "Puerto expuesto por el contenedor"
+  type        = number
+}
+
+variable "task_cpu" {
+  description = "CPU asignada a la tarea Fargate"
+  type        = number
+}
+
+variable "task_memory" {
+  description = "Memoria asignada a la tarea Fargate (MB)"
+  type        = number
 }
 
 variable "lambda_name" {

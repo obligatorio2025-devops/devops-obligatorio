@@ -1,6 +1,6 @@
 resource "aws_ecr_repository" "repos" {
   for_each = toset(var.service_names)
-  
+  force_delete = true   # Esto borra automáticamente todas las imágenes al destruir
   # Nombre del repositorio con entorno + servicio
   name = "${var.environment}-${each.value}"
 
