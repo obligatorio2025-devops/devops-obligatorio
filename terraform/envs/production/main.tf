@@ -1,4 +1,4 @@
-// Pasa variables del ambiente (Develop) hacia los modulos
+// Pasa variables del ambiente (Producción) hacia los modulos
 
 terraform {
   required_version = ">= 1.0"
@@ -22,33 +22,17 @@ module "vpc" {
   environment         = var.environment
 }
 
-
-module "alb" {
-  count       = var.enable_alb ? 1 : 0
-  source      = "../../modules/alb"
-  vpc_id      = module.vpc.vpc_id
-  subnet_ids  = module.vpc.public_subnet_ids    
-  environment = var.environment
-  security_group_ids = [aws_security_group.alb_sg.id]
+module "ecr" {
+  source        = "../../modules/ecr"
+  service_names = ["api-gateway", "inventory-service", "product-service"]
+  environment   = var.environment
 }
 
-module "asg" {
-  count            = var.enable_asg ? 1 : 0
-  source           = "../../modules/asg"
-  ami_filter       = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
-  vpc_id           = module.vpc.vpc_id
-  subnet_ids       = module.vpc.public_subnet_ids
-  environment      = var.environment
-  min_size         = var.min_instances
-  max_size         = var.max_instances
-  desired_capacity = var.desired_instances
-  target_group_arn = var.enable_alb ? module.alb[0].target_group_arn : null
-  security_group_ids = [aws_security_group.asg_sg.id]
-}
 
+# Security Group para el ALB
 resource "aws_security_group" "alb_sg" {
   name        = "${var.environment}-alb-sg"
-  description = "Security group for ALB"
+  description = "Security group for ALB in ${var.environment}"
   vpc_id      = module.vpc.vpc_id
 
   ingress {
@@ -58,6 +42,13 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # tráfico público HTTPS
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -66,27 +57,20 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
-resource "aws_security_group" "asg_sg" {
-  name        = "${var.environment}-asg-sg"
-  description = "Security group for EC2 in ASG"
+# Security Group para ECS / Fargate
+resource "aws_security_group" "ecs_sg" {
+  name        = "${var.environment}-ecs-sg"
+  description = "Security group for ECS tasks in ${var.environment}"
   vpc_id      = module.vpc.vpc_id
 
-  # Permitir HTTP desde el ALB
+  # Permitir tráfico desde el ALB
   ingress {
-    from_port       = 80
-    to_port         = 80
+    from_port       = var.container_port
+    to_port         = var.container_port
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id]
   }
 
-  # Opcional: SSH solo desde tu IP
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] //to do: es inseguro!! cambiar cuando sepamos que poner
-  }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -95,18 +79,33 @@ resource "aws_security_group" "asg_sg" {
   }
 }
 
-module "ecr" {
-  source        = "../../modules/ecr"
-  service_names = ["api-gateway", "inventory-service", "product-service"]
-  environment   = var.environment
+
+module "alb" {
+  source      = "../../modules/alb"
+  environment = var.environment
+  subnet_ids  = module.vpc.public_subnet_ids    
+  vpc_id      = module.vpc.vpc_id
+  security_group_ids = [aws_security_group.alb_sg.id]
+  container_port      = var.container_port
 }
 
-# to do: ajustar  
-# module "ecs" {
-#   source               = "../../modules/ecs"
-#   vpc_id               = module.vpc.vpc_id
-#   subnet_ids           = module.vpc.public_subnet_ids
-# }
+module "ecs" {
+  source              = "../../modules/ecs"
+  vpc_id              = module.vpc.vpc_id 
+  environment         = var.environment
+  cluster_name        = var.cluster_name
+  service_name        = var.service_name
+  desired_count       = var.desired_count
+  min_capacity        = var.min_capacity
+  max_capacity        = var.max_capacity
+  subnet_ids          = module.vpc.public_subnet_ids
+  security_group_ids  = [aws_security_group.ecs_sg.id]  
+  container_image     = var.container_image
+  container_port      = var.container_port
+  task_cpu            = var.task_cpu    
+  task_memory         = var.task_memory 
+  target_group_arn    = module.alb.target_group_arn
+}
 
 module "backups" {
   source      = "../../modules/backups"

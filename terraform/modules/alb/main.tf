@@ -15,13 +15,13 @@ resource "aws_lb_target_group" "app" {
   port     = 80
   protocol = "HTTP"
   vpc_id   = var.vpc_id
-  target_type = "instance"
+  target_type = "ip"
   health_check {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     timeout             = 5
     interval            = 30
-    path                = "/health"
+    path                = "/"
     matcher             = "200-399"
   }
 
@@ -32,7 +32,7 @@ resource "aws_lb_target_group" "app" {
 
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.app.arn
-  port              = 80
+  port              = var.container_port
   protocol          = "HTTP"
 
   default_action {
@@ -40,3 +40,12 @@ resource "aws_lb_listener" "http" {
     target_group_arn = aws_lb_target_group.app.arn
   }
 }
+
+# module "observability" {
+#   source          = "../modules/observability"
+#   region          = var.region
+#   env             = var.env
+#   ecs_cluster_name = module.ecs.cluster_name
+#   alb_arn_suffix   = module.alb.alb_arn_suffix
+# }
+

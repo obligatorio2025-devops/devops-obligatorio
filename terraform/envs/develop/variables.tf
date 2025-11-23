@@ -1,34 +1,21 @@
-// Variables del ambiente (Develop)
-
 variable "aws_region" {
-  type        = string
-  default     = "us-east-1"
+  type    = string
+  default = "us-east-1"
 }
 
 variable "environment" {
-  description = "Develop"
+  description = "Nombre del entorno (develop, testing, prod)"
   type        = string
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block for VPC - develop"
+  description = "CIDR block for VPC"
   type        = string
 }
 
 variable "public_subnet_cidrs" {
-  description = "CIDR block for public subnet - develop"
+  description = "CIDR blocks for public subnets"
   type        = list(string)
-}
-
-variable "instance_type" {
-  type        = string
-  default     = "t2.micro"
-}
-
-variable "instance_count" {
-  description = "Number of EC2 instances for develop"
-  type        = number
-  default     = 1
 }
 
 variable "azs" {
@@ -36,14 +23,47 @@ variable "azs" {
   type        = list(string)
 }
 
-//to do: ver que se pone aca
-variable "aws_access_key" {
-  type    = string
-  default = "FAKE_AWS_KEY"
+variable "cluster_name" {
+  description = "Nombre del cluster ECS"
+  type        = string
 }
 
-variable "aws_secret_key" {
-  type    = string
-  default = "FAKE_AWS_SECRET"
+variable "service_name" {
+  description = "Nombre del servicio ECS"
+  type        = string
 }
 
+variable "desired_count" {
+  description = "Número de tareas por defecto"
+  type        = number
+}
+
+variable "min_capacity" {
+  description = "Capacidad mínima de tareas"
+  type        = number
+}
+
+variable "max_capacity" {
+  description = "Capacidad máxima de tareas"
+  type        = number
+}
+
+variable "container_image" {
+  description = "Imagen del contenedor"
+  type        = string
+}
+
+variable "container_port" {
+  description = "Puerto expuesto por el contenedor"
+  type        = number
+}
+
+variable "task_cpu" {
+  description = "CPU asignada a la tarea Fargate"
+  type        = number
+}
+
+variable "task_memory" {
+  description = "Memoria asignada a la tarea Fargate (MB)"
+  type        = number
+}
