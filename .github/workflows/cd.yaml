@@ -63,7 +63,7 @@ jobs:
 
           case "$BRANCH" in
             develop)
-              echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
+              echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
               ;;
             testing)
               echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
