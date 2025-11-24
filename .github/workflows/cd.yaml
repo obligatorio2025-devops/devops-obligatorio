@@ -97,9 +97,9 @@ jobs:
         run: |
           terraform output -json > tf_outputs.json
           echo "ecs_cluster_name=$(jq -r '.ecs_cluster_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "api_gateway_service=$(jq -r '.api_gateway_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "inventory_service=$(jq -r '.inventory_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "product_service=$(jq -r '.product_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "api_gateway_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "inventory_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "product_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "api=$(jq -r '.api_gateway_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "inventory=$(jq -r '.inventory_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "product=$(jq -r '.product_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
