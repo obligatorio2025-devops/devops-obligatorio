@@ -21,7 +21,7 @@ jobs:
     name: Apply Terraform
     runs-on: ubuntu-latest
     outputs:
-      cluster_name: ${{ steps.tfout.outputs.cluster_name }}
+      ecs_cluster_name: ${{ steps.tfout.outputs.ecs_cluster_name }}
       api_gateway_service: ${{ steps.tfout.outputs.api_gateway_service }}
       inventory_service: ${{ steps.tfout.outputs.inventory_service }}
       product_service: ${{ steps.tfout.outputs.product_service }}
@@ -96,7 +96,7 @@ jobs:
         working-directory: ${{ steps.env.outputs.dir }}
         run: |
           terraform output -json > tf_outputs.json
-          echo "cluster_name=$(jq -r '.cluster_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "ecs_cluster_name=$(jq -r '.ecs_cluster_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "api_gateway_service=$(jq -r '.api_gateway_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "inventory_service=$(jq -r '.inventory_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "product_service=$(jq -r '.product_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
@@ -201,7 +201,7 @@ jobs:
       # Actualizar servicios ECS usando outputs de build
       - name: Update ECS Services
         env:
-          CLUSTER_NAME: ${{ needs.terraform.outputs.cluster_name }}
+          CLUSTER_NAME: ${{ needs.terraform.outputs.ecs_cluster_name }}
           API_SERVICE: ${{ needs.terraform.outputs.api_gateway_service }}
           INVENTORY_SERVICE: ${{ needs.terraform.outputs.inventory_service }}
           PRODUCT_SERVICE: ${{ needs.terraform.outputs.product_service }}
