@@ -15,7 +15,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
   ok_actions    = [aws_sns_topic.alerts.arn]
 }
 
-# Alarma ALB 5xx (solo si pasás el ARN suffix)
+# Alarma ALB 5xx 
 resource "aws_cloudwatch_metric_alarm" "alb_5xx_high" {
   count               = var.alb_arn_suffix == "" ? 0 : 1
   alarm_name          = "alb-5xx-high-${var.env}"
