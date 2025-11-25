@@ -1,51 +1,37 @@
 name: Deploy to AWS ECS
 
 on:
-  pull_request:
-    types:
-      - closed
-    branches:
-      - develop
-      - testing
-      - main
+   pull_request:
+     types:
+       - closed
+     branches:
+       - develop
+       - testing
+       - main
   workflow_dispatch:
+ 
 
 env:
   AWS_REGION: us-east-1
 
 jobs:
-  build:
-    if: github.event.pull_request.merged == true
-    name: Build & Deploy Microservice
+  terraform:
+   if: github.event.pull_request.merged == true
+    name: Apply Terraform
     runs-on: ubuntu-latest
     outputs:
-      cluster_name: ${{ steps.tfout.outputs.cluster_name }}
+      ecs_cluster_name: ${{ steps.tfout.outputs.ecs_cluster_name }}
       api_gateway_service: ${{ steps.tfout.outputs.api_gateway_service }}
       inventory_service: ${{ steps.tfout.outputs.inventory_service }}
       product_service: ${{ steps.tfout.outputs.product_service }}
+      api: ${{ steps.tfout.outputs.api }}
+      inventory: ${{ steps.tfout.outputs.inventory }}
+      product: ${{ steps.tfout.outputs.product }}
+      alb_dns_name: ${{ steps.tfout.outputs.alb_dns_name }}
 
-    steps: 
-      - name: Checkout repo
+    steps:
+      - name: Checkout repo            
         uses: actions/checkout@v4
-
-      # Build microservices
-      - name: Build API Gateway
-        working-directory: ./app/api-gateway
-        run: |
-          echo "Building API Gateway..."
-          docker build -t stockwiz-api-gateway:latest .
-
-      - name: Build Inventory Service
-        working-directory: ./app/inventory-service
-        run: |
-          echo "Building Inventory Service..."
-          docker build -t stockwiz-inventory-service:latest .
-
-      - name: Build Product Service
-        working-directory: ./app/product-service
-        run: |
-          echo "Building Product Service..."
-          docker build -t stockwiz-product-service:latest .
 
       # Configurar credenciales AWS
       - name: Configuración de credenciales AWS
@@ -109,13 +95,60 @@ jobs:
         working-directory: ${{ steps.env.outputs.dir }}
         run: |
           terraform output -json > tf_outputs.json
-          echo "cluster_name=$(jq -r '.cluster_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "api_gateway_service=$(jq -r '.api_gateway_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "inventory_service=$(jq -r '.inventory_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "product_service=$(jq -r '.product_service.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "ecs_cluster_name=$(jq -r '.ecs_cluster_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "api_gateway_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "inventory_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "product_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "api=$(jq -r '.api_gateway_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "inventory=$(jq -r '.inventory_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "product=$(jq -r '.product_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "alb_dns_name=$(jq -r '.alb_dns_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+      
+      - name: Mostrar ALB URL
+        working-directory: ${{ steps.env.outputs.dir }}
+        run: |
+          echo "ALB URL: http://${{ steps.tfout.outputs.alb_dns_name }}"
+
+  build:
+   if: github.event.pull_request.merged == true
+    name: Build & Push Microservice
+    needs: terraform
+    runs-on: ubuntu-latest
+    steps: 
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      # Configurar credenciales AWS
+      - name: Configuración de credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Login a ECR
+      - name: Login en Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Build microservices
+      - name: Build API Gateway
+        working-directory: ./app/api-gateway
+        run: |
+          echo "Building API Gateway..."
+          docker build -t stockwiz-api-gateway:latest .
+
+      - name: Build Inventory Service
+        working-directory: ./app/inventory-service
+        run: |
+          echo "Building Inventory Service..."
+          docker build -t stockwiz-inventory-service:latest .
+
+      - name: Build Product Service
+        working-directory: ./app/product-service
+        run: |
+          echo "Building Product Service..."
+          docker build -t stockwiz-product-service:latest .
 
       # Backup main.py solo en producción
       - name: Backup main.py antes del deploy (solo producción)
@@ -126,74 +159,56 @@ jobs:
           echo "Haciendo backup de main.py en S3..."
           aws s3 cp ./app/product-service/main.py s3://$BUCKET/main-$(date +%Y%m%d-%H%M%S).py
 
-      # Login y push a ECR
-      - name: Login en Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
       - name: Push microservicios a ECR
         env:
-          API_ECR: ${{ steps.tfout.outputs.api }}
-          INVENTORY_ECR: ${{ steps.tfout.outputs.inventory }}
-          PRODUCT_ECR: ${{ steps.tfout.outputs.product }}
+          API_ECR: ${{ needs.terraform.outputs.api }}
+          INVENTORY_ECR: ${{ needs.terraform.outputs.inventory }}
+          PRODUCT_ECR: ${{ needs.terraform.outputs.product }}
           IMAGE_TAG: ${{ github.sha }}
+
         run: |
           echo "Subiendo imágenes a ECR..."
 
           docker tag stockwiz-api-gateway:latest $API_ECR:$IMAGE_TAG
-          docker tag stockwiz-api-gateway:latest $API_ECR:latest
           docker push $API_ECR:$IMAGE_TAG
-          docker push $API_ECR:latest
 
           docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:$IMAGE_TAG
-          docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:latest
           docker push $INVENTORY_ECR:$IMAGE_TAG
-          docker push $INVENTORY_ECR:latest
 
           docker tag stockwiz-product-service:latest $PRODUCT_ECR:$IMAGE_TAG
-          docker tag stockwiz-product-service:latest $PRODUCT_ECR:latest
           docker push $PRODUCT_ECR:$IMAGE_TAG
-          docker push $PRODUCT_ECR:latest
 
           echo "Imágenes subidas exitosamente"
 
-      # DESCOMENTAR CUANDO QUEDE LO DE ECS
-      # # Actualizar servicios ECS usando outputs de build
-      # - name: Update ECS Services
-      #   env:
-      #     CLUSTER_NAME: ${{ steps.tfout.outputs.cluster_name }}
-      #     API_SERVICE: ${{ steps.tfout.outputs.api_gateway_service }}
-      #     INVENTORY_SERVICE: ${{ steps.tfout.outputs.inventory_service }}
-      #     PRODUCT_SERVICE: ${{ steps.tfout.outputs.product_service }}
-      #     AWS_REGION: ${{ env.AWS_REGION }}
-      #   run: |
-      #     echo "Actualizando servicios ECS..."
+  deploy:
+  if: github.event.pull_request.merged == true
+    name: Deploy to ECS
+    needs: [build, terraform]
+    runs-on: ubuntu-latest  
+    steps:
+      - name: Config Github Checkout
+        uses: actions/checkout@v4
 
-      #     aws ecs update-service \
-      #       --cluster $CLUSTER_NAME \
-      #       --service $API_SERVICE \
-      #       --force-new-deployment \
-      #       --region $AWS_REGION
-
-      #     aws ecs update-service \
-      #       --cluster $CLUSTER_NAME \
-      #       --service $INVENTORY_SERVICE \
-      #       --force-new-deployment \
-      #       --region $AWS_REGION
-
-      #     aws ecs update-service \
-      #       --cluster $CLUSTER_NAME \
-      #       --service $PRODUCT_SERVICE \
-      #       --force-new-deployment \
-      #       --region $AWS_REGION
-
-      #     echo "Deployment en los 3 microservicios finalizado"
-
-      # Mostrar URL del ALB si existe
-      - name: Mostrar URL del ALB (solo si existe)
-        working-directory: ${{ steps.env.outputs.dir }}
+      - name: Configurar AWS
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      # Actualizar servicios ECS usando outputs de build
+      - name: Update ECS Services
+        env:
+          CLUSTER_NAME: ${{ needs.terraform.outputs.ecs_cluster_name }}
+          API_SERVICE: ${{ needs.terraform.outputs.api_gateway_service }}
+          INVENTORY_SERVICE: ${{ needs.terraform.outputs.inventory_service }}
+          PRODUCT_SERVICE: ${{ needs.terraform.outputs.product_service }}
         run: |
-          if terraform output -json | jq -e '.alb_dns_name' > /dev/null; then
-            echo "ALB URL: http://$(terraform output -raw alb_dns_name)"
-          else
-            echo "No hay ALB en este ambiente"
-          fi
+          echo "Actualizando servicios ECS..."
+
+          aws ecs update-service --cluster $CLUSTER_NAME --service $API_SERVICE --force-new-deployment
+          aws ecs update-service --cluster $CLUSTER_NAME --service $INVENTORY_SERVICE --force-new-deployment
+          aws ecs update-service --cluster $CLUSTER_NAME --service $PRODUCT_SERVICE --force-new-deployment
+
+          echo "Deployment en los 3 microservicios finalizado"
