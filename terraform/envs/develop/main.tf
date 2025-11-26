@@ -70,36 +70,19 @@ resource "aws_security_group" "ecs_sg" {
     security_groups = [aws_security_group.alb_sg.id]
   }
 
-  # Permitir comunicación entre contenedores PostgreSQL
+  # Permitir comunicación entre contenedores (desde cualquier fuente en la VPC)
   ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_sg.id]
+    from_port   = 5432
+    to_port     = 6379
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr]
   }
 
-  # Permitir comunicación entre contenedores Redis
   ingress {
-    from_port       = 6379
-    to_port         = 6379
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_sg.id]
-  }
-
-  # Permitir comunicación entre contenedores Product Service
-  ingress {
-    from_port       = 8001
-    to_port         = 8001
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_sg.id]
-  }
-
-  # Permitir comunicación entre contenedores Inventory Service
-  ingress {
-    from_port       = 8002
-    to_port         = 8002
-    protocol        = "tcp"
-    security_groups = [aws_security_group.ecs_sg.id]
+    from_port   = 8001
+    to_port     = 8002
+    protocol    = "tcp"
+    cidr_blocks = [module.vpc.vpc_cidr]
   }
 
   egress {
