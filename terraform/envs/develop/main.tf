@@ -103,6 +103,16 @@ module "alb" {
   container_port      = var.container_port
 }
 
+# CloudWatch Log Group para ECS
+resource "aws_cloudwatch_log_group" "ecs" {
+  name              = "/ecs/${var.cluster_name}"
+  retention_in_days = 7
+
+  tags = {
+    Environment = var.environment
+  }
+}
+
 locals {
   container_definitions = jsonencode([
     # PostgreSQL
@@ -122,11 +132,20 @@ locals {
         {name  = "POSTGRES_USER", value = "admin"},
         {name  = "POSTGRES_PASSWORD", value = "admin123"}
       ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/${var.cluster_name}"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "postgres"
+        }
+      }
       healthCheck = {
-        command     = ["CMD-SHELL", "pg_isready -U admin -d microservices_db"]
-        interval    = 30
-        timeout     = 5
-        retries     = 3
+        command     = ["CMD-SHELL", "pg_isready -U admin -d microservices_db || exit 1"]
+        interval    = 10
+        timeout     = 10
+        retries     = 5
+        startPeriod = 40
       }
     },
     
@@ -142,10 +161,19 @@ locals {
         }
       ]
       healthCheck = {
-        command     = ["CMD-SHELL", "redis-cli ping"]
-        interval    = 30
+        command     = ["CMD", "redis-cli", "ping"]
+        interval    = 10
         timeout     = 5
-        retries     = 3
+        retries     = 5
+        startPeriod = 30
+      }
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/${var.cluster_name}"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "redis"
+        }
       }
     },
 
