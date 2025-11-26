@@ -17,7 +17,6 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
 
 # Alarma ALB 5xx 
 resource "aws_cloudwatch_metric_alarm" "alb_5xx_high" {
-  for_each = var.alb_arn_suffix == null || var.alb_arn_suffix == "" ? {} : { "enabled" = var.alb_arn_suffix }
 
   alarm_name          = "alb-5xx-high-${var.env}"
   namespace           = "AWS/ApplicationELB"
