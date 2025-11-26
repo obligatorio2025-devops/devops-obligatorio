@@ -38,7 +38,7 @@ resource "aws_ecs_task_definition" "app" {
         }
       ]
     }
-  ])
+  ] ) 
 
   execution_role_arn = data.aws_iam_role.lab_role.arn
 }
