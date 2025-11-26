@@ -26,20 +26,8 @@ resource "aws_ecs_task_definition" "app" {
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
 
-  container_definitions = jsonencode([
-    {
-      name      = var.service_name
-      image     = var.container_image
-      essential = true
-      portMappings = [
-        {
-          containerPort = var.container_port  
-          protocol      = "tcp"
-        }
-      ]
-    }
-  ])
-
+  container_definitions = var.container_definitions
+  
   execution_role_arn = data.aws_iam_role.lab_role.arn
 }
 
@@ -58,8 +46,8 @@ resource "aws_ecs_service" "app" {
 
   load_balancer {
     target_group_arn = var.target_group_arn
-    container_name   = var.service_name
-    container_port   = var.container_port
+    container_name   = "api-gateway"
+    container_port   = 8000
   }
 
   deployment_minimum_healthy_percent = 50

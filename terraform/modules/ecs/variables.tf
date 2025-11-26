@@ -75,3 +75,8 @@ variable "target_group_arn" {
   type        = string
   description = "ARN del target group del ALB"
 }
+
+variable "container_definitions" {
+  type        = string
+  description = "JSON string con la definición de contenedores"
+}

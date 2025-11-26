@@ -12,7 +12,7 @@ desired_count   = 1
 min_capacity    = 1
 max_capacity    = 1
 container_image = "public.ecr.aws/nginx/nginx:latest"
-container_port  = 80
+container_port  = 8000
 task_cpu         = 256   
 task_memory      = 512 
 
