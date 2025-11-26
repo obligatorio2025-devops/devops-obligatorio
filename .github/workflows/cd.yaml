@@ -167,14 +167,14 @@ jobs:
         run: |
           echo "Subiendo imágenes a ECR..."
 
-          docker tag stockwiz-api-gateway:latest $API_ECR:$IMAGE_TAG
-          docker push $API_ECR:$IMAGE_TAG
+          docker tag stockwiz-api-gateway:latest $API_ECR:latest
+          docker push $API_ECR:latest
 
-          docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:$IMAGE_TAG
-          docker push $INVENTORY_ECR:$IMAGE_TAG
+          docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:latest
+          docker push $INVENTORY_ECR:latest
 
-          docker tag stockwiz-product-service:latest $PRODUCT_ECR:$IMAGE_TAG
-          docker push $PRODUCT_ECR:$IMAGE_TAG
+          docker tag stockwiz-product-service:latest $PRODUCT_ECR:latest
+          docker push $PRODUCT_ECR:latest
 
           echo "Imágenes subidas exitosamente"
 
