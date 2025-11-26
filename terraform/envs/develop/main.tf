@@ -169,7 +169,7 @@ locals {
     # Product Service (Python)
     {
       name      = "product-service"
-      image     = "${module.ecr.ecr_repository_urls["product-service"]}:latest"
+      image     = "${module.ecr.repositories["product-service"].repository_url}:latest"
       essential = true
       portMappings = [
         {
@@ -199,7 +199,7 @@ locals {
     # Inventory Service (Go)
     {
       name      = "inventory-service"
-      image     = "${module.ecr.ecr_repository_urls["inventory-service"]}:latest"
+      image     = "${module.ecr.repositories["inventory-service"].repository_url}:latest"
       essential = true
       portMappings = [
         {
@@ -228,7 +228,7 @@ locals {
     # API Gateway (Go)
     {
       name      = "api-gateway"
-      image     = "${module.ecr.ecr_repository_urls["api-gateway"]}:latest"
+      image     = "${module.ecr.repositories["api-gateway"].repository_url}:latest"
       essential = true
       portMappings = [
         {
