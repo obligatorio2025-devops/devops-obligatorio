@@ -9,11 +9,11 @@ terraform {
 }
 
 provider "aws" {
-  region = var.region
+  region = var.aws_region
 }
 
 resource "aws_cloudwatch_dashboard" "stockwiz" {
-  dashboard_name = "stockwiz-${var.env}-dashboard"
+  dashboard_name = "stockwiz-${var.environment}-dashboard"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -28,7 +28,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.region
+          region  = var.aws_region
         }
       },
       {
@@ -42,7 +42,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.region
+          region  = var.aws_region
         }
       },
       {
@@ -56,7 +56,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.region
+          region  = var.aws_region
         }
       },
       {
@@ -70,7 +70,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Sum",
           period  = 300,
           view    = "timeSeries",
-          region  = var.region
+          region  = var.aws_region
         }
       },
       {
@@ -84,7 +84,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.region
+          region  = var.aws_region
         }
       },
       {
@@ -98,7 +98,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Sum",
           period  = 300,
           view    = "timeSeries",
-          region  = var.region
+          region  = var.aws_region
         }
       }
     ]
@@ -107,7 +107,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
 
 # SNS topic para notificaciones
 resource "aws_sns_topic" "alerts" {
-  name = "stockwiz-alerts-${var.env}"
+  name = "stockwiz-alerts-${var.environment}"
 }
 
 resource "aws_sns_topic_subscription" "email" {
@@ -118,7 +118,7 @@ resource "aws_sns_topic_subscription" "email" {
 
 # Alarma: cuando CPU esta alta en ECS
 resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
-  alarm_name          = "stockwiz-ecs-cpu-high-${var.env}"
+  alarm_name          = "stockwiz-ecs-cpu-high-${var.environment}"
   alarm_description   = "Se dispara si la CPU del ECS supera 80% durante 3 minutos consecutivos"
   namespace           = "AWS/ECS"
   metric_name         = "CPUUtilization"
@@ -136,7 +136,7 @@ resource "aws_cloudwatch_metric_alarm" "ecs_cpu_high" {
 
 # Alarma: Errores 5xx en ALB
 resource "aws_cloudwatch_metric_alarm" "alb_5xx_high" {
-  alarm_name          = "stockwiz-alb-5xx-high-${var.env}"
+  alarm_name          = "stockwiz-alb-5xx-high-${var.environment}"
   alarm_description   = "Se dispara si el ALB devuelve más de 10 errores 5xx en 3 minutos"
   namespace           = "AWS/ApplicationELB"
   metric_name         = "HTTPCode_Target_5XX_Count"
