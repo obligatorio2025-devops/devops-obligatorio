@@ -4,7 +4,7 @@ variable "aws_region" {
 }
 
 variable "environment" {
-  description = "Nombre del entorno (develop, testing, prod)"
+  description = "Nombre del entorno"
   type        = string
 }
 
