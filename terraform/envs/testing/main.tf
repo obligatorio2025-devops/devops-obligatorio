@@ -323,7 +323,7 @@ module "ecs" {
 
 module "observability" {
   source            = "../../modules/observability"
-  env               = var.environment
+  environment               = var.environment
   region            = var.aws_region
   ecs_cluster_name  = module.ecs.cluster_name
   ecs_service_name  = module.ecs.service_name

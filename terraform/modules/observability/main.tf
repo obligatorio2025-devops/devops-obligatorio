@@ -9,7 +9,7 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region = var.region
 }
 
 resource "aws_cloudwatch_dashboard" "stockwiz" {
@@ -28,7 +28,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.aws_region
+          region  = var.region
         }
       },
       {
@@ -42,7 +42,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.aws_region
+          region  = var.region
         }
       },
       {
@@ -56,7 +56,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.aws_region
+          region  = var.region
         }
       },
       {
@@ -70,7 +70,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Sum",
           period  = 300,
           view    = "timeSeries",
-          region  = var.aws_region
+          region  = var.region
         }
       },
       {
@@ -84,7 +84,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Average",
           period  = 300,
           view    = "timeSeries",
-          region  = var.aws_region
+          region  = var.region
         }
       },
       {
@@ -98,7 +98,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
           stat    = "Sum",
           period  = 300,
           view    = "timeSeries",
-          region  = var.aws_region
+          region  = var.region
         }
       }
     ]
