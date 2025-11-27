@@ -329,5 +329,5 @@ module "observability" {
   ecs_service_name  = module.ecs.service_name
   alb_arn_suffix    = module.alb.lb_arn_suffix
   target_group_arn_suffix = module.alb.target_group_arn_suffix
-  backup_lambda_arn = aws_lambda_function.backup_lambda.arn
+  backup_lambda_arn =  module.lambda.backup_lambda.arn
 }
