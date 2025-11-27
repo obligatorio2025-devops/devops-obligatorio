@@ -1,4 +1,4 @@
-name: Deploy to AWS ECS
+name: CD - Deploy to AWS ECS
 
 on:
   pull_request:
@@ -10,7 +10,6 @@ on:
        - main
   workflow_dispatch:
  
-
 env:
   AWS_REGION: us-east-1
 
@@ -21,9 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       ecs_cluster_name: ${{ steps.tfout.outputs.ecs_cluster_name }}
-      api_gateway_service: ${{ steps.tfout.outputs.api_gateway_service }}
-      inventory_service: ${{ steps.tfout.outputs.inventory_service }}
-      product_service: ${{ steps.tfout.outputs.product_service }}
+      ecs_service_name: ${{ steps.tfout.outputs.ecs_service_name }}
       api: ${{ steps.tfout.outputs.api }}
       inventory: ${{ steps.tfout.outputs.inventory }}
       product: ${{ steps.tfout.outputs.product }}
@@ -96,9 +93,7 @@ jobs:
         run: |
           terraform output -json > tf_outputs.json
           echo "ecs_cluster_name=$(jq -r '.ecs_cluster_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "api_gateway_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "inventory_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-          echo "product_service=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
+          echo "ecs_service_name=$(jq -r '.ecs_service_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "api=$(jq -r '.api_gateway_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "inventory=$(jq -r '.inventory_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "product=$(jq -r '.product_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
@@ -169,14 +164,14 @@ jobs:
         run: |
           echo "Subiendo imágenes a ECR..."
 
-          docker tag stockwiz-api-gateway:latest $API_ECR:$IMAGE_TAG
-          docker push $API_ECR:$IMAGE_TAG
+          docker tag stockwiz-api-gateway:latest $API_ECR:latest
+          docker push $API_ECR:latest
 
-          docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:$IMAGE_TAG
-          docker push $INVENTORY_ECR:$IMAGE_TAG
+          docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:latest
+          docker push $INVENTORY_ECR:latest
 
-          docker tag stockwiz-product-service:latest $PRODUCT_ECR:$IMAGE_TAG
-          docker push $PRODUCT_ECR:$IMAGE_TAG
+          docker tag stockwiz-product-service:latest $PRODUCT_ECR:latest
+          docker push $PRODUCT_ECR:latest
 
           echo "Imágenes subidas exitosamente"
 
@@ -197,13 +192,11 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
       
-      # Actualizar servicios ECS usando outputs de build
-      - name: Update ECS Services
+      # Actualizar servicio ECS usando outputs de Terraform
+      - name: Update ECS Service
         env:
           CLUSTER_NAME: ${{ needs.terraform.outputs.ecs_cluster_name }}
-          API_SERVICE: ${{ needs.terraform.outputs.api_gateway_service }}
-          INVENTORY_SERVICE: ${{ needs.terraform.outputs.inventory_service }}
-          PRODUCT_SERVICE: ${{ needs.terraform.outputs.product_service }}
+          SERVICE_NAME: ${{ needs.terraform.outputs.ecs_service_name }}
         run: |
           echo "Actualizando servicios ECS..."
 
