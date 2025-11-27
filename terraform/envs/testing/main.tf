@@ -318,3 +318,14 @@ module "ecs" {
   container_definitions = local.container_definitions
   vpc_id              = module.vpc.vpc_id
 }
+
+
+ module "observability" {
+   source                   = "../../observability"
+   region                   = var.aws_region
+   env                      = var.environment
+   ecs_cluster_name         = module.ecs.cluster_name
+   ecs_service_name         = module.ecs.service_name
+   alb_arn_suffix           = module.alb.alb_arn_suffix
+   target_group_arn_suffix  = module.alb.target_group_arn_suffix
+ }

@@ -2,12 +2,12 @@ name: CD - Deploy to AWS ECS
 
 on:
   pull_request:
-    types:
-      - closed
-    branches:
-      - develop
-      - testing
-      - main
+     types:
+       - closed
+     branches:
+       - develop
+       - testing
+       - main
   workflow_dispatch:
  
 env:
@@ -198,11 +198,10 @@ jobs:
           CLUSTER_NAME: ${{ needs.terraform.outputs.ecs_cluster_name }}
           SERVICE_NAME: ${{ needs.terraform.outputs.ecs_service_name }}
         run: |
-          echo "Actualizando servicio ECS en cluster: $CLUSTER_NAME"
-          aws ecs update-service \
-            --cluster $CLUSTER_NAME \
-            --service $SERVICE_NAME \
-            --force-new-deployment \
-            --region ${{ env.AWS_REGION }}
-          
-          echo "Deployment finalizado exitosamente"
+          echo "Actualizando servicios ECS..."
+
+          aws ecs update-service --cluster $CLUSTER_NAME --service $API_SERVICE --force-new-deployment
+          aws ecs update-service --cluster $CLUSTER_NAME --service $INVENTORY_SERVICE --force-new-deployment
+          aws ecs update-service --cluster $CLUSTER_NAME --service $PRODUCT_SERVICE --force-new-deployment
+
+          echo "Deployment en los 3 microservicios finalizado"
