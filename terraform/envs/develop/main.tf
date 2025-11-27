@@ -157,7 +157,7 @@ locals {
 
       command = [
         "sh", "-c",
-        "echo \"CREATE TABLE IF NOT EXISTS products(id SERIAL PRIMARY KEY, name TEXT, price NUMERIC); CREATE TABLE IF NOT EXISTS inventory(id SERIAL PRIMARY KEY, product_id INTEGER, stock INTEGER);\" | PGPASSWORD=admin123 psql -h postgres -U admin -d microservices_db"
+        "echo \"CREATE TABLE IF NOT EXISTS products(id SERIAL PRIMARY KEY, name TEXT, price NUMERIC); CREATE TABLE IF NOT EXISTS inventory(id SERIAL PRIMARY KEY, product_id INTEGER, stock INTEGER);\" | PGPASSWORD=admin123 psql -h localhost -U admin -d microservices_db"
       ]
 
       dependsOn = [
