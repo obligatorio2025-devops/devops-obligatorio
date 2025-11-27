@@ -149,6 +149,34 @@ locals {
       }
     },
     
+    # INIT DB
+    {
+      name      = "init-db"
+      image     = "postgres:15-alpine"
+      essential = false
+
+      command = [
+        "sh", "-c",
+        "echo \"CREATE TABLE IF NOT EXISTS products(id SERIAL PRIMARY KEY, name TEXT, price NUMERIC); CREATE TABLE IF NOT EXISTS inventory(id SERIAL PRIMARY KEY, product_id INTEGER, stock INTEGER);\" | PGPASSWORD=admin123 psql -h localhost -U admin -d microservices_db"
+      ]
+
+      dependsOn = [
+        {
+          containerName = "postgres"
+          condition     = "HEALTHY"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/${var.cluster_name}"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "init-db"
+        }
+      }
+    },
+    
     # Redis
     {
       name      = "redis"
