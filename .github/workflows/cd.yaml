@@ -1,24 +1,21 @@
-name: Deploy to AWS ECS
+name: CD - Deploy to AWS ECS
 
 on:
-  # pull_request:
-  #   types:
-  #     - closed
-  #   branches:
-  #     - develop
-  #     - testing
-  #     - main
   pull_request:
-    branches: [ "develop", "testing", "main" ]
+    types:
+      - closed
+    branches:
+      - develop
+      - testing
+      - main
   workflow_dispatch:
  
-
 env:
   AWS_REGION: us-east-1
 
 jobs:
   terraform:
-    # if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     name: Apply Terraform
     runs-on: ubuntu-latest
     outputs:
@@ -62,7 +59,7 @@ jobs:
 
           case "$BRANCH" in
             develop)
-              echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
+              echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
               ;;
             testing)
               echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
@@ -108,7 +105,7 @@ jobs:
           echo "ALB URL: http://${{ steps.tfout.outputs.alb_dns_name }}"
 
   build:
-    # if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     name: Build & Push Microservice
     needs: terraform
     runs-on: ubuntu-latest
@@ -179,7 +176,7 @@ jobs:
           echo "Imágenes subidas exitosamente"
 
   deploy:
-    # if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true
     name: Deploy to ECS
     needs: [build, terraform]
     runs-on: ubuntu-latest  
