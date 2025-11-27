@@ -156,14 +156,16 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx_high" {
 resource "aws_sns_topic_subscription" "lambda" {
   topic_arn = aws_sns_topic.alerts.arn
   protocol  = "lambda"
-  endpoint  = aws_lambda_function.backup_lambda.arn
+  endpoint  = var.backup_lambda_arn
 }
+
 
 # Permiso para que SNS invoque el Lambda
 resource "aws_lambda_permission" "sns_invoke" {
   statement_id  = "AllowExecutionFromSNS"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.backup_lambda.function_name
+  function_name = var.backup_lambda_arn
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.alerts.arn
 }
+
