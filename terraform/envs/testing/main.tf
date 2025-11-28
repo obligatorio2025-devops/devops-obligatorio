@@ -337,3 +337,9 @@ module "lambda" {
   environment   = var.environment
 }
 
+
+module "backups" {
+  source      = "../../modules/backups"
+  bucket_name = var.bucket_name
+  environment = var.environment
+}

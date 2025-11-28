@@ -336,3 +336,10 @@ module "lambda" {
   bucket_name   = module.backups.bucket_name 
   environment   = var.environment
 }
+
+
+module "backups" {
+  source      = "../../modules/backups"
+  bucket_name = var.bucket_name
+  environment = var.environment
+}
