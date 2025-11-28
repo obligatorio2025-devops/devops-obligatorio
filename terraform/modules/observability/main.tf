@@ -104,7 +104,7 @@ resource "aws_cloudwatch_dashboard" "stockwiz" {
     ]
   })
 }
-/* 
+
 # SNS topic para notificaciones
 resource "aws_sns_topic" "alerts" {
   name = "stockwiz-alerts-${var.environment}"
@@ -169,4 +169,3 @@ resource "aws_lambda_permission" "sns_invoke" {
   source_arn    = aws_sns_topic.alerts.arn
 }
 
- */
