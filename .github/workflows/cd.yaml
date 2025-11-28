@@ -1,18 +1,18 @@
 name: CD - Deploy to AWS ECS
-
+ 
 on:
   pull_request:
-     types:
+    types:
        - closed
-     branches:
-       - develop
-       - testing
-       - main
+    branches:
+      - develop
+      - testing
+      - main
   workflow_dispatch:
  
 env:
   AWS_REGION: us-east-1
-
+ 
 jobs:
   terraform:
     if: github.event.pull_request.merged == true
@@ -25,11 +25,11 @@ jobs:
       inventory: ${{ steps.tfout.outputs.inventory }}
       product: ${{ steps.tfout.outputs.product }}
       alb_dns_name: ${{ steps.tfout.outputs.alb_dns_name }}
-
+ 
     steps:
       - name: Checkout repo            
         uses: actions/checkout@v4
-
+ 
       # Configurar credenciales AWS
       - name: Configuración de credenciales AWS
         uses: aws-actions/configure-aws-credentials@v5
@@ -38,11 +38,11 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
-
+ 
       # Setup Terraform
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-
+ 
       # Determinar ambiente segun rama
       - name: Determinar ambiente según rama
         id: env
@@ -54,9 +54,9 @@ jobs:
             # Esto es un push directo
             BRANCH="${GITHUB_REF##*/}"
           fi
-
+ 
           echo "Rama destino: $BRANCH"
-
+ 
           case "$BRANCH" in
             develop)
               echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
@@ -72,20 +72,20 @@ jobs:
               exit 1
               ;;
           esac
-
+ 
       # Terraform Init / Plan / Apply
       - name: Terraform Init
         working-directory: ${{ steps.env.outputs.dir }}
         run: terraform init
-
+ 
       - name: Terraform Plan
         working-directory: ${{ steps.env.outputs.dir }}
         run: terraform plan
-
+ 
       - name: Terraform Apply
         working-directory: ${{ steps.env.outputs.dir }}
         run: terraform apply -auto-approve
-
+ 
       # Obtener outputs de Terraform
       - name: Obtener Terraform outputs
         id: tfout
@@ -98,21 +98,21 @@ jobs:
           echo "inventory=$(jq -r '.inventory_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "product=$(jq -r '.product_service_ecr_url.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
           echo "alb_dns_name=$(jq -r '.alb_dns_name.value' < tf_outputs.json)" >> $GITHUB_OUTPUT
-      
+     
       - name: Mostrar ALB URL
         working-directory: ${{ steps.env.outputs.dir }}
         run: |
           echo "ALB URL: http://${{ steps.tfout.outputs.alb_dns_name }}"
-
+ 
   build:
     if: github.event.pull_request.merged == true
     name: Build & Push Microservice
     needs: terraform
     runs-on: ubuntu-latest
-    steps: 
+    steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+ 
       # Configurar credenciales AWS
       - name: Configuración de credenciales AWS
         uses: aws-actions/configure-aws-credentials@v5
@@ -121,30 +121,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
-
+ 
       # Login a ECR
       - name: Login en Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
-
+ 
       # Build microservices
       - name: Build API Gateway
         working-directory: ./app/api-gateway
         run: |
           echo "Building API Gateway..."
           docker build -t stockwiz-api-gateway:latest .
-
+ 
       - name: Build Inventory Service
         working-directory: ./app/inventory-service
         run: |
           echo "Building Inventory Service..."
           docker build -t stockwiz-inventory-service:latest .
-
+ 
       - name: Build Product Service
         working-directory: ./app/product-service
         run: |
           echo "Building Product Service..."
           docker build -t stockwiz-product-service:latest .
-
+ 
       # Backup main.py solo en producción
       - name: Backup main.py antes del deploy (solo producción)
         if: github.ref == 'refs/heads/main'
@@ -153,28 +153,28 @@ jobs:
         run: |
           echo "Haciendo backup de main.py en S3..."
           aws s3 cp ./app/product-service/main.py s3://$BUCKET/main-$(date +%Y%m%d-%H%M%S).py
-
+ 
       - name: Push microservicios a ECR
         env:
           API_ECR: ${{ needs.terraform.outputs.api }}
           INVENTORY_ECR: ${{ needs.terraform.outputs.inventory }}
           PRODUCT_ECR: ${{ needs.terraform.outputs.product }}
           IMAGE_TAG: ${{ github.sha }}
-
+ 
         run: |
           echo "Subiendo imágenes a ECR..."
-
+ 
           docker tag stockwiz-api-gateway:latest $API_ECR:latest
           docker push $API_ECR:latest
-
+ 
           docker tag stockwiz-inventory-service:latest $INVENTORY_ECR:latest
           docker push $INVENTORY_ECR:latest
-
+ 
           docker tag stockwiz-product-service:latest $PRODUCT_ECR:latest
           docker push $PRODUCT_ECR:latest
-
+ 
           echo "Imágenes subidas exitosamente"
-
+ 
   deploy:
     if: github.event.pull_request.merged == true
     name: Deploy to ECS
@@ -183,7 +183,7 @@ jobs:
     steps:
       - name: Config Github Checkout
         uses: actions/checkout@v4
-
+ 
       - name: Configurar AWS
         uses: aws-actions/configure-aws-credentials@v5
         with:
@@ -191,17 +191,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
-      
+     
       # Actualizar servicio ECS usando outputs de Terraform
       - name: Update ECS Service
         env:
           CLUSTER_NAME: ${{ needs.terraform.outputs.ecs_cluster_name }}
           SERVICE_NAME: ${{ needs.terraform.outputs.ecs_service_name }}
         run: |
-          echo "Actualizando servicios ECS..."
-
-          aws ecs update-service --cluster $CLUSTER_NAME --service $API_SERVICE --force-new-deployment
-          aws ecs update-service --cluster $CLUSTER_NAME --service $INVENTORY_SERVICE --force-new-deployment
-          aws ecs update-service --cluster $CLUSTER_NAME --service $PRODUCT_SERVICE --force-new-deployment
-
-          echo "Deployment en los 3 microservicios finalizado"
+          echo "Actualizando servicio ECS en cluster: $CLUSTER_NAME"
+          aws ecs update-service \
+            --cluster $CLUSTER_NAME \
+            --service $SERVICE_NAME \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+         
+          echo "Deployment finalizado exitosamente"
