@@ -331,5 +331,8 @@ module "observability" {
 }
 
 module "lambda" {
-  source = "../../modules/lambda"
+  source        = "../../modules/lambda"
+  lambda_name   = var.lambda_name
+  bucket_name   = module.backups.bucket_name 
+  environment   = var.environment
 }
