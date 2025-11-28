@@ -23,7 +23,4 @@ output "target_group_arn_suffix" {
   value = aws_lb_target_group.this.arn_suffix
 }
 
-output "backup_lambda_arn" {
-  value = aws_lambda_function.backup_lambda.arn
-}
 
