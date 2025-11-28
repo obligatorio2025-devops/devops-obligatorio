@@ -19,3 +19,4 @@ output "target_group_arn_suffix" {
   description = "ARN suffix del Target Group"
   value       = aws_lb_target_group.app.arn_suffix
 }
+
