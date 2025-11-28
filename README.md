@@ -54,8 +54,6 @@ Este es el entorno de desarrollo activo.
 Aquí los desarrolladores integran y prueban continuamente sus cambios.
 Antes de permitir que el código avance, deben superarse con éxito las siguientes etapas del pipeline:
 
-Build de los microservicios.
-
 Ejecución de pruebas automatizadas (unitarias en Go y Python).
 
 Análisis estático de código con SonarQube y cumplimiento de los quality gates.
@@ -69,7 +67,7 @@ El build y los tests en develop finalizaron correctamente.
 
 El análisis de SonarQube no presenta fallos críticos.
 
-Se otorga aprobación manual para el despliegue.
+El pull request es aprobado por una persona autorizada (que pertenece a un Team específico en GitHub)
 
 Esta aprobación manual garantiza que los testers reciban versiones controladas y documentadas, evitando que cada merge en develop se despliegue automáticamente en testing.
 
@@ -77,17 +75,23 @@ Esta aprobación manual garantiza que los testers reciban versiones controladas 
 
 Es el entorno estable de producción.
 Solo se actualiza luego de que el equipo de QA valide completamente la versión en testing.
-El paso de testing a main también requiere aprobación manual, la cual se gestiona desde los environments protegidos de GitHub Actions.
+El paso de testing a main también requiere aprobación manual, la cual se gestiona aprobando el pull request por parte de una persona autorizada. Al igual que en testing, debe ser un usuario perteneciente a un team específico en GitHub (diferente al que autoriza el merge a testing)
+
 De esta forma, el despliegue final se realiza únicamente con la confirmación del equipo responsable.
 
-El pipeline contiene tres etapas:
-1. **Build** – Compilación y construcción de los microservicios.  
-2. **Test** – Ejecución de pruebas automáticas (Go y Python).  
-3. **SonarQube** – Análisis estático de código y validación de *quality gates*.  
-4. **Deploy** – Despliegue controlado en el ambiente correspondiente.
+El pipeline  de CI contiene dos etapas:
+
+1. **Test** – Ejecución de pruebas automáticas (Go y Python).  
+2. **SonarQube** – Análisis estático de código y validación de *quality gates*.  
+
+El pipeline de CD contiene 3 etapas:
+
+1. **Terraform** - Inicializa y despliega la infraestructura en AWS con terraform
+2. **Build** - Construye los microservicios y los guarda en los repositoriocs de ECR
+3. **Deploy** – Despliegue controlado en ECS en el ambiente correspondiente.
 
 Los **quality gates** aseguran que:
-- Solo se promuevan cambios de `develop` a `testing` si el build, las pruebas y el análisis de SonarQube son exitosos.  
+- Solo se promuevan cambios de `develop` a `testing` si  las pruebas y el análisis de SonarQube son exitosos.  
 - El paso de `develop` a `testing` requiere aprobación manual para garantizar que los testers validen versiones específicas.  
 - El paso de `testing` a `production` también requiere **aprobación manual** configurada en GitHub Actions (environments protegidos).
 
@@ -101,14 +105,82 @@ Los **quality gates** aseguran que:
 - **SonarQube** – Análisis estático de código y control de calidad.  
 - **pytest / go test** – Testing automatizado.
 
----
+## Arquitectura
 
-## Resumen
+**ECS Fargate con múltiples microservicios**
 
-Esta configuración garantiza:
-- Integración continua y pruebas automatizadas en `develop`.  
-- Despliegue controlado a `testing` solo con aprobación manual, evitando interferencias con el desarrollo y facilitando la validación por QA.  
-- Despliegue seguro y aprobado en `production`.  
-- Monitoreo de calidad mediante SonarQube y *quality gates* entre ambientes.
+**Application Load Balancer (ALB)**
 
----
+**VPC con 2 subnets públicas**
+
+**Auto-escalado por servicio**
+
+**Métricas y alertas (módulo Observability)**
+
+**ECR para imágenes Docker**
+
+**Terraform como IaC**
+
+**Función Lambda para backuo**
+
+## Cómo desplegar la infraestructura manualmente
+
+**El pipeline de cd se encarga de cread la infraestructura, crear las imagenes, guardarlas en ECR y pushearlas a ECS, pero aún así detallamos un paso a paso del flujo de construcción de la infraestructura**
+
+1. **Clonar el repositorio**
+
+2. **Configurar credenciales AWS**
+
+aws configure
+
+Debes contar con un usuario IAM con permisos para:
+
+- ECS, ECR, EC2, VPC
+- IAM
+- CloudWatch
+- Application Load Balancer
+- S3
+
+3. **Inicializar Terraform**
+
+Desde el entorno se quieras desplegar (por ejemplo, production):
+
+cd terraform/envs/production
+terraform init
+
+4. **Revisar variables**
+
+Si es necesario, modificar el archivo:
+
+envs/production/terraform.tfvars
+
+Con variables como:
+
+- environment = "production"
+- desired_count = 2
+- max_count = 6
+- alb_listener_port = 80
+
+5. **Planificar**
+
+terraform plan
+
+6. **Aplicar**
+
+terraform apply -auto-approve
+
+Esto creará:
+
+- VPC, subnets, rutas
+- ALB
+- ECS Cluster + Services
+- Auto-escalado
+- CloudWatch Dashboard + Alarms
+- ECR
+
+## Variables necesarias (en GitHub Secrets):
+
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
+- AWS_SESSION_TOKEN
+- SONAR_TOKEN
