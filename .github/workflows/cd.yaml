@@ -130,19 +130,19 @@ jobs:
       - name: Build API Gateway
         working-directory: ./app/api-gateway
         run: |
-          echo "Building API Gateway..."
+          echo "Construyendo API Gateway..."
           docker build -t stockwiz-api-gateway:latest .
  
       - name: Build Inventory Service
         working-directory: ./app/inventory-service
         run: |
-          echo "Building Inventory Service..."
+          echo "Construyendo inventario del servicio..."
           docker build -t stockwiz-inventory-service:latest .
  
       - name: Build Product Service
         working-directory: ./app/product-service
         run: |
-          echo "Building Product Service..."
+          echo "Construyendo producto del servicio..."
           docker build -t stockwiz-product-service:latest .
  
       # Backup main.py solo en producción
