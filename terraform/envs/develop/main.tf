@@ -319,7 +319,7 @@ module "ecs" {
   vpc_id              = module.vpc.vpc_id
 }
 
-/* module "observability" {
+module "observability" {
   source            = "../../modules/observability"
   environment               = var.environment
   region            = var.aws_region
@@ -329,7 +329,7 @@ module "ecs" {
   target_group_arn_suffix = module.alb.target_group_arn_suffix
   backup_lambda_arn       = module.lambda.backup_lambda_arn
 }
- */
+
 module "lambda" {
   source        = "../../modules/lambda"
   lambda_name   = var.lambda_name
