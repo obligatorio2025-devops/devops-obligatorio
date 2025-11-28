@@ -330,3 +330,6 @@ module "observability" {
   backup_lambda_arn       = module.lambda.backup_lambda_arn
 }
 
+module "lambda" {
+  source = "../../modules/lambda"
+}

@@ -67,3 +67,11 @@ variable "task_memory" {
   description = "Memoria asignada a la tarea Fargate (MB)"
   type        = number
 }
+
+variable "lambda_name" {
+  type = string
+}
+
+variable "bucket_name" {
+  type = string
+}
