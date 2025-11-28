@@ -200,6 +200,11 @@ jobs:
         run: |
           echo "Actualizando servicios ECS..."
 
+          echo "Cluster: $CLUSTER_NAME"
+          echo "API: $API_SERVICE"
+          echo "Inventory: $INVENTORY_SERVICE"
+          echo "Product: $PRODUCT_SERVICE"
+
           aws ecs update-service --cluster $CLUSTER_NAME --service $API_SERVICE --force-new-deployment
           aws ecs update-service --cluster $CLUSTER_NAME --service $INVENTORY_SERVICE --force-new-deployment
           aws ecs update-service --cluster $CLUSTER_NAME --service $PRODUCT_SERVICE --force-new-deployment
