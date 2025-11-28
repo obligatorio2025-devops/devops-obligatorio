@@ -41,11 +41,4 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# module "observability" {
-#   source          = "../modules/observability"
-#   region          = var.region
-#   env             = var.env
-#   ecs_cluster_name = module.ecs.cluster_name
-#   alb_arn_suffix   = module.alb.alb_arn_suffix
-# }
 

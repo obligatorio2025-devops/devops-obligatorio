@@ -320,12 +320,26 @@ module "ecs" {
 }
 
 module "observability" {
-  source                   = "../../modules/observability"
-  region                   = var.aws_region
-  env                      = var.environment
-  ecs_cluster_name         = module.ecs.cluster_name
-  ecs_service_name         = module.ecs.service_name
-  alb_arn_suffix           = module.alb.alb_arn_suffix
-  target_group_arn_suffix  = module.alb.target_group_arn_suffix
+  source            = "../../modules/observability"
+  environment               = var.environment
+  region            = var.aws_region
+  ecs_cluster_name        = module.ecs.cluster_name
+  ecs_service_name        = module.ecs.service_name
+  alb_arn_suffix          = module.alb.alb_arn_suffix
+  target_group_arn_suffix = module.alb.target_group_arn_suffix
+  backup_lambda_arn       = module.lambda.backup_lambda_arn
 }
 
+module "lambda" {
+  source        = "../../modules/lambda"
+  lambda_name   = var.lambda_name
+  bucket_name   = module.backups.bucket_name 
+  environment   = var.environment
+}
+
+
+module "backups" {
+  source      = "../../modules/backups"
+  bucket_name = var.bucket_name
+  environment = var.environment
+}
