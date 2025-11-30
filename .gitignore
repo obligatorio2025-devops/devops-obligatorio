@@ -1,0 +1,31 @@
+# Carpetas internas de Terraform
+.terraform/
+.terraform.lock.hcl
+
+# Estados locales
+*.tfstate
+*.tfstate.backup
+
+# Estado remoto descargado accidentalmente
+terraform.tfstate
+terraform.tfstate.*
+
+# Archivos ZIP generados para Lambdas u otros paquetes
+*.zip
+
+# Archivos de Windows (WSL) con stream Zone.Identifier
+*Zone.Identifier
+
+# Archivos del módulo Lambda
+product-backup-service.zip
+
+# Archivos sensibles generados por AWS (por si aplicaras otros comandos)
+crash.log
+override.tf
+override.tf.json
+
+# Archivos de plan (si alguna vez los generás)
+*.tfplan
+
+# Data local de pruebas
+*.tmp

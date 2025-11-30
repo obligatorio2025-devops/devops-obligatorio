@@ -1,0 +1,50 @@
+name: CI Pipeline - StockWiz
+
+on:
+  workflow_dispatch: 
+  pull_request:
+    branches: [ "develop", "testing", "main" ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    # --- Run Go tests (api-gateway + inventory)
+    - name: Run Go tests
+      working-directory: ./app/api-gateway
+      run: |
+        echo "Corriendo tests de API Gateway..."
+        go test ./... -coverprofile=coverage.out
+
+    - name: Run Inventory Service tests
+      working-directory: ./app/inventory-service
+      run: |
+        echo "Corriendo tests de inventario del servicio..."
+        go test ./... -coverprofile=coverage.out
+
+    # --- Run Python tests (product-service)
+    - name: Run Python tests
+      working-directory: ./app/product-service
+      run: |
+        echo "Corriendo tests de python..."
+        pip install -r requirements.txt pytest pytest-cov
+        pytest ../../tests/python/product-service --cov=. --cov-report=xml:coverage.xml
+
+
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
