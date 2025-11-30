@@ -14,5 +14,5 @@ container_port  = 80
 task_cpu         = 256   
 task_memory      = 512 
 
-bucket_name       = "backups-prod-456"
+bucket_name       = "backups-testing-456"
 lambda_name       = "product-backup-lambda"

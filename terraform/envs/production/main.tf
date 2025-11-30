@@ -127,7 +127,6 @@ locals {
           protocol      = "tcp"
         }
       ]
-      #To do: pasar a secrets
       environment = [
         {name  = "POSTGRES_DB", value = "microservices_db"},
         {name  = "POSTGRES_USER", value = "admin"},
