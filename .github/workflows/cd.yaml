@@ -2,8 +2,8 @@ name: CD - Deploy to AWS ECS
  
 on:
   pull_request:
-    types:
-       - closed
+    # types:
+    #    - closed
     branches:
       - develop
       - testing
