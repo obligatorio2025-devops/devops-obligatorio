@@ -25,6 +25,7 @@ jobs:
       inventory: ${{ steps.tfout.outputs.inventory }}
       product: ${{ steps.tfout.outputs.product }}
       alb_dns_name: ${{ steps.tfout.outputs.alb_dns_name }}
+      bucket: ${{ steps.env.outputs.bucket }}
  
     steps:
       - name: Checkout repo            
