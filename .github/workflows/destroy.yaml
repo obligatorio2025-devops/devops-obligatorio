@@ -1,0 +1,83 @@
+name: Destroy AWS Environment
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: 'Escribe "destroy" para confirmar'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Validar confirmación
+      run: |
+        if [ "${{ github.event.inputs.confirm_destroy }}" != "destroy" ]; then
+          echo "Destrucción cancelada. Debes escribir 'destroy'."
+          exit 1
+        fi
+
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Configurar credenciales AWS
+      uses: aws-actions/configure-aws-credentials@v5
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Determinar ambiente según rama
+      id: env
+      run: |
+        branch="${GITHUB_REF##*/}"
+
+        if [[ "$branch" == "develop" ]]; then
+          echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
+        elif [[ "$branch" == "testing" ]]; then
+          echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
+        else
+          echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Obtener repos ECR desde Terraform outputs
+      id: ecr
+      working-directory: ${{ steps.env.outputs.dir }}
+      run: |
+        terraform init -input=false
+        terraform output -json > tf_outputs.json
+        echo "api=$(jq -r '.api_gateway_ecr_url.value' tf_outputs.json)" >> $GITHUB_OUTPUT
+        echo "inventory=$(jq -r '.inventory_service_ecr_url.value' tf_outputs.json)" >> $GITHUB_OUTPUT
+        echo "product=$(jq -r '.product_service_ecr_url.value' tf_outputs.json)" >> $GITHUB_OUTPUT
+
+    - name: Vaciar imágenes en ECR
+      run: |
+        repos=(
+          "${{ steps.ecr.outputs.api }}"
+          "${{ steps.ecr.outputs.inventory }}"
+          "${{ steps.ecr.outputs.product }}"
+        )
+
+        for repo in "${repos[@]}"; do
+          echo "Eliminando imágenes del repositorio: $repo"
+          aws ecr batch-delete-image \
+            --repository-name $(basename $repo) \
+            --image-ids "$(aws ecr list-images --repository-name $(basename $repo) --query 'imageIds[*]' --output json)" || true
+        done
+
+    - name: Terraform Destroy
+      working-directory: ${{ steps.env.outputs.dir }}
+      run: terraform destroy -auto-approve
+
+    - name: Finalizado
+      run: echo "Infraestructura destruida exitosamente."

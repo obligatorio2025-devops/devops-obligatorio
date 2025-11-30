@@ -1,0 +1,22 @@
+output "alb_arn" {
+  value = aws_lb.app.arn
+}
+
+output "target_group_arn" {
+  value = aws_lb_target_group.app.arn
+}
+
+output "alb_dns_name" {
+  value = aws_lb.app.dns_name
+}
+
+output "alb_arn_suffix" {
+  description = "ARN suffix del ALB"
+  value       = aws_lb.app.arn_suffix
+}
+
+output "target_group_arn_suffix" {
+  description = "ARN suffix del Target Group"
+  value       = aws_lb_target_group.app.arn_suffix
+}
+
