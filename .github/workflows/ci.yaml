@@ -18,20 +18,20 @@ jobs:
     - name: Run Go tests
       working-directory: ./app/api-gateway
       run: |
-        echo "Running API Gateway tests..."
+        echo "Corriendo tests de API Gateway..."
         go test ./... -coverprofile=coverage.out
 
     - name: Run Inventory Service tests
       working-directory: ./app/inventory-service
       run: |
-        echo "Running Inventory Service tests..."
+        echo "Corriendo tests de inventario del servicio..."
         go test ./... -coverprofile=coverage.out
 
     # --- Run Python tests (product-service)
     - name: Run Python tests
       working-directory: ./app/product-service
       run: |
-        echo "Running Python tests..."
+        echo "Corriendo tests de python..."
         pip install -r requirements.txt pytest pytest-cov
         pytest ../../tests/python/product-service --cov=. --cov-report=xml:coverage.xml
 
