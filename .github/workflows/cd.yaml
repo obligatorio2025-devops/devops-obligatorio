@@ -25,6 +25,7 @@ jobs:
       inventory: ${{ steps.tfout.outputs.inventory }}
       product: ${{ steps.tfout.outputs.product }}
       alb_dns_name: ${{ steps.tfout.outputs.alb_dns_name }}
+      bucket: ${{ steps.env.outputs.bucket }}
  
     steps:
       - name: Checkout repo            
@@ -60,12 +61,15 @@ jobs:
           case "$BRANCH" in
             develop)
               echo "dir=terraform/envs/develop" >> $GITHUB_OUTPUT
+              echo "bucket=backups-develop-456" >> $GITHUB_OUTPUT
               ;;
             testing)
               echo "dir=terraform/envs/testing" >> $GITHUB_OUTPUT
+              echo "bucket=backups-testing-456" >> $GITHUB_OUTPUT
               ;;
             main)
               echo "dir=terraform/envs/production" >> $GITHUB_OUTPUT
+              echo "bucket=backups-prod-456" >> $GITHUB_OUTPUT
               ;;
             *)
               echo "Rama '$BRANCH' no tiene ambiente configurado. Abortando workflow."
@@ -145,11 +149,10 @@ jobs:
           echo "Construyendo producto del servicio..."
           docker build -t stockwiz-product-service:latest .
  
-      # Backup main.py solo en producción
-      - name: Backup main.py antes del deploy (solo producción)
-        if: github.ref == 'refs/heads/main'
+      # Backup main.py 
+      - name: Backup main.py antes del deploy
         env:
-          BUCKET: backups-prod
+          BUCKET: ${{ needs.terraform.outputs.bucket }}
         run: |
           echo "Haciendo backup de main.py en S3..."
           aws s3 cp ./app/product-service/main.py s3://$BUCKET/main-$(date +%Y%m%d-%H%M%S).py
